@@ -27,6 +27,9 @@ export function Navbar() {
                 </Link>
 
                 <div className="flex items-center gap-12 text-[14px]">
+                    <Link href="/" className={getLinkClassName("/")}>
+                        메인
+                    </Link>
                     <Link href="/schedule" className={getLinkClassName("/schedule")}>
                         스케줄
                     </Link>
