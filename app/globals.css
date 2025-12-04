@@ -3,10 +3,13 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
-  --malmoi-blue: #00C2FF; /* Estimated from design */
+  --malmoi-blue: #13c0ff;
+  /* From Figma design */
   --malmoi-text: #333333;
   --malmoi-gray: #F5F5F5;
   --malmoi-border: #E0E0E0;
+  --header-border: #d9d9d9;
+  --container-border: #ced4da;
 }
 
 @theme inline {
