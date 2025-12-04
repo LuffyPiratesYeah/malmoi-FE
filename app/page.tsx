@@ -6,7 +6,7 @@ export default async function Dashboard() {
   const schedules = await db.schedule.getAll();
 
   return (
-    <div className="min-h-screen bg-white pb-20">
+    <div className="min-h-screen bg-white">
       <Navbar />
       <DashboardClient schedules={schedules} />
     </div>
