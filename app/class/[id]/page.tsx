@@ -1,3 +1,5 @@
+export const runtime = "edge";
+
 import { Navbar } from "@/components/layout/Navbar";
 import { Badge } from "@/components/ui/Badge";
 import { db } from "@/lib/db";
