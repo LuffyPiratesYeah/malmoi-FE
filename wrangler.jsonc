@@ -9,7 +9,10 @@
   ],
   "assets": {
     "directory": ".open-next/assets",
-    "binding": "public"
+    "binding": "ASSETS",
+  },
+  "images": {
+    "binding": "IMAGES",
   },
   "observability": {
     "logs": {
