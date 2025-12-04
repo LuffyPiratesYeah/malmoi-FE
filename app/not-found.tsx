@@ -8,11 +8,6 @@ export default function NotFound() {
             <Navbar />
             <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
                 <div className="max-w-lg w-full flex flex-col items-center text-center">
-                    {/* Large 404 Text */}
-                    <h1 className="text-[120px] md:text-[160px] font-bold text-primary leading-none mb-4">
-                        404
-                    </h1>
-
                     {/* Character Illustration */}
                     <div className="relative w-48 h-48 md:w-64 md:h-64 mb-8">
                         <Image
