@@ -7,6 +7,10 @@
     "nodejs_compat",
     "enable_nodejs_process_v2"
   ],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "public"
+  },
   "observability": {
     "logs": {
       "enabled": true,
