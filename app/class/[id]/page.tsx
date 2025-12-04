@@ -2,8 +2,9 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Badge } from "@/components/ui/Badge";
 import { db } from "@/lib/db";
 
-export default async function ClassDetailPage({ params }: { params: { id: string } }) {
-    const classData = await db.class.getById(params.id);
+export default async function ClassDetailPage({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params;
+    const classData = await db.class.getById(id);
 
     if (!classData) {
         return <div>Class not found</div>;
