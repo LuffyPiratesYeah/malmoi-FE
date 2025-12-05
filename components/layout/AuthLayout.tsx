@@ -17,7 +17,7 @@ export function AuthLayout({ children, leftContent }: AuthLayoutProps) {
             </div>
 
             {/* Right Side */}
-            <div className="flex w-full flex-col justify-center px-8 lg:w-1/2 lg:px-24">
+            <div className="flex w-full flex-col justify-center px-8 lg:w-1/2 lg:px-24 bg-[#FCFCFC]">
                 {children}
             </div>
         </div>
