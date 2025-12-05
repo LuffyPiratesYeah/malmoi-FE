@@ -38,7 +38,7 @@ export function Modal({ isOpen, onClose, title, children, footer }: ModalProps) 
                         <h3 className="text-xl font-bold text-gray-900">{title}</h3>
                     </div>
                 )}
-                <div className="mb-8 text-center text-gray-600">
+                <div className="text-center text-gray-600">
                     {children}
                 </div>
                 {footer}

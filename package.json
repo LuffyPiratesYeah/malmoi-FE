@@ -14,10 +14,12 @@
   "dependencies": {
     "@opennextjs/cloudflare": "^1.14.3",
     "@tailwindcss/postcss": "^4",
-    "tailwindcss": "^4",
     "next": "16.0.7",
     "react": "19.2.0",
-    "react-dom": "19.2.0"
+    "react-dom": "19.2.0",
+    "react-hot-toast": "^2.6.0",
+    "tailwindcss": "^4",
+    "zustand": "^5.0.9"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
