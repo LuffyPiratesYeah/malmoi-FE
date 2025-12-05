@@ -162,11 +162,13 @@ export function ClassListClient({ classes }: ClassListClientProps) {
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
                     </div>
-                    <Link href="/class/new">
-                        <Button className="h-12 bg-blue-50 text-primary hover:bg-blue-100">
-                            수업 추가하기
-                        </Button>
-                    </Link>
+                    {useAuthStore((state) => state.user?.userType === "teacher") && (
+                        <Link href="/class/new">
+                            <Button className="h-12 bg-blue-50 text-primary hover:bg-blue-100">
+                                수업 추가하기
+                            </Button>
+                        </Link>
+                    )}
                     <div className="flex gap-2">
                         {["비즈니스", "K-Drama", "TOPIK 대비", "입문자용"].map((tag) => (
                             <button

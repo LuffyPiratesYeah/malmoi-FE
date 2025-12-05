@@ -44,10 +44,19 @@ export function Navbar() {
                     <Link href={mainPath} className={getLinkClassName(mainPath)}>
                         메인
                     </Link>
-                    {/* 스케줄 메뉴 제거됨 */}
                     <Link href="/class" className={getLinkClassName("/class")}>
                         수업
                     </Link>
+                    {isAuthenticated && user?.userType === "student" && (
+                        <Link href="/schedule" className={getLinkClassName("/schedule")}>
+                            스케줄
+                        </Link>
+                    )}
+                    {isAuthenticated && user?.userType === "teacher" && (
+                        <Link href="/manage-classes" className={getLinkClassName("/manage-classes")}>
+                            수업 관리
+                        </Link>
+                    )}
                 </div>
 
                 <div className="flex items-center gap-8 text-[14px]">

@@ -21,7 +21,14 @@ export async function createClassAction(formData: FormData) {
     const category = formData.get("category") as string;
     const type = formData.get("type") as string;
 
-    await db.class.create({
+    console.log("====== 수업 등록 시작 ======");
+    console.log("Title:", title);
+    console.log("Description:", description);
+    console.log("Level:", level);
+    console.log("Category:", category);
+    console.log("Type:", type);
+
+    const newClass = await db.class.create({
         title,
         description,
         level,
@@ -30,8 +37,13 @@ export async function createClassAction(formData: FormData) {
         image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&q=80&w=1000", // Default image
     });
 
+    console.log("Created class:", newClass);
+    console.log("All classes:", await db.class.getAll());
+    console.log("====== 수업 등록 완료 ======");
+
     revalidatePath("/class");
-    redirect("/class");
+    revalidatePath("/manage-classes");
+    redirect("/manage-classes");
 }
 
 export async function bookClassAction(classId: string) {

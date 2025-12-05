@@ -23,7 +23,7 @@ export function Input({
             )}
             <input
                 className={cn(
-                    "w-full bg-transparent py-2 transition-colors focus:outline-none disabled:cursor-not-allowed disabled:opacity-50",
+                    "w-full bg-transparent py-2 text-left transition-colors focus:outline-none disabled:cursor-not-allowed disabled:opacity-50",
                     variant === "underline" && "border-b border-gray-300 focus:border-primary placeholder:text-gray-300",
                     variant === "box" && "border border-gray-300 rounded-md px-3 focus:border-primary",
                     className
