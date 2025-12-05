@@ -8,6 +8,9 @@ import { useState } from "react";
 import { ClassItem } from "@/types";
 import { bookClassAction } from "@/app/actions";
 import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/lib/useAuthStore";
+import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 
 interface ClassListClientProps {
     classes: ClassItem[];
@@ -16,6 +19,8 @@ interface ClassListClientProps {
 export function ClassListClient({ classes }: ClassListClientProps) {
     const [selectedClass, setSelectedClass] = useState<ClassItem | null>(null);
     const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+    const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+    const router = useRouter();
 
     // Filter States
     const [selectedLevels, setSelectedLevels] = useState<string[]>([]);
@@ -32,6 +37,17 @@ export function ClassListClient({ classes }: ClassListClientProps) {
     // In a real app, this would come from the DB or local storage
     const [likedClassIds, setLikedClassIds] = useState<Set<string>>(new Set());
     const [recentClassIds] = useState<Set<string>>(new Set([classes[0]?.id, classes[1]?.id].filter(Boolean))); // Mock: first two classes are "recent"
+
+    const handleBookingClick = (cls: ClassItem) => {
+        if (!isAuthenticated) {
+            toast.error("로그인이 필요합니다");
+            setTimeout(() => {
+                router.push("/login");
+            }, 1000);
+            return;
+        }
+        setSelectedClass(cls);
+    };
 
     const handleBooking = async () => {
         if (selectedClass) {
@@ -319,7 +335,7 @@ export function ClassListClient({ classes }: ClassListClientProps) {
                                             <Button
                                                 className="flex-1 rounded-lg text-sm bg-[#00C2FF] hover:bg-[#00C2FF]/90 text-white border-none"
                                                 size="sm"
-                                                onClick={() => setSelectedClass(cls)}
+                                                onClick={() => handleBookingClick(cls)}
                                             >
                                                 수업 예약
                                             </Button>

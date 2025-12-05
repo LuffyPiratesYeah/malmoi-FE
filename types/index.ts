@@ -2,6 +2,7 @@ export interface User {
     id: string;
     email: string;
     name: string;
+    userType: "student" | "teacher";
     isTeacher: boolean;
     profileImage?: string;
     verificationStatus: "none" | "pending" | "verified";

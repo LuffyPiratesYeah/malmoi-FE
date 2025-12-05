@@ -6,9 +6,32 @@ let users: User[] = [
         id: "user-1",
         email: "kimtaehyun081117@gmail.com",
         name: "디포네",
+        userType: "student",
         isTeacher: false,
         verificationStatus: "none",
     },
+    {
+        id: "student-1",
+        email: "student@example.com",
+        name: "학생",
+        userType: "student",
+        isTeacher: false,
+        verificationStatus: "none",
+    },
+    {
+        id: "teacher-1",
+        email: "teacher@example.com",
+        name: "선생님",
+        userType: "teacher",
+        isTeacher: true,
+        verificationStatus: "verified",
+    },
+];
+
+// Mock credentials
+const credentials = [
+    { username: "student", password: "1234", userId: "student-1" },
+    { username: "teacher", password: "1234", userId: "teacher-1" },
 ];
 
 let classes: ClassItem[] = [
@@ -86,6 +109,18 @@ let schedules: ScheduleItem[] = [
 
 // Mock Database Functions
 export const db = {
+    auth: {
+        login: async (username: string, password: string) => {
+            const credential = credentials.find(
+                (c) => c.username === username && c.password === password
+            );
+            if (!credential) {
+                return null;
+            }
+            const user = users.find((u) => u.id === credential.userId);
+            return user || null;
+        },
+    },
     user: {
         getCurrent: async () => users[0], // Simulating single user session for now
         update: async (id: string, data: Partial<User>) => {
