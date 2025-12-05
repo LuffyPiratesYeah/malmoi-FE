@@ -8,18 +8,20 @@ import { ClassItem } from "@/types";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import { useAuthStore } from "@/lib/useAuthStore";
 
 interface ClassDetailClientProps {
     classData: ClassItem;
-    isOwner: boolean; // 이 수업의 소유자인지 여부
 }
 
-export function ClassDetailClient({ classData, isOwner }: ClassDetailClientProps) {
+export function ClassDetailClient({ classData }: ClassDetailClientProps) {
     const router = useRouter();
+    const user = useAuthStore((state) => state.user);
+    const isOwner = user?.isTeacher && user?.id === classData.tutorId;
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // TODO: 실제 수업 ID에 맞춰서 데이터 편집 진행
     const [editForm, setEditForm] = useState({
         title: classData.title,
         description: classData.description,
@@ -28,20 +30,50 @@ export function ClassDetailClient({ classData, isOwner }: ClassDetailClientProps
         type: classData.type,
     });
 
-    const handleEdit = () => {
-        // TODO: 실제 API 연동 시 수업 ID를 사용하여 업데이트
-        console.log("수업 수정:", classData.id, editForm);
-        toast.success("수업이 수정되었습니다");
-        setIsEditModalOpen(false);
-        // router.refresh(); // 페이지 새로고침
+    const handleEdit = async () => {
+        setIsSubmitting(true);
+        try {
+            const response = await fetch(`/api/classes/${classData.id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(editForm),
+            });
+
+            if (!response.ok) {
+                throw new Error(await response.text());
+            }
+
+            toast.success("수업이 수정되었습니다");
+            router.refresh();
+            setIsEditModalOpen(false);
+        } catch (error) {
+            console.error("Failed to update class", error);
+            toast.error("수업 수정에 실패했습니다");
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
-    const handleDelete = () => {
-        // TODO: 실제 API 연동 시 수업 ID를 사용하여 삭제
-        console.log("수업 삭제:", classData.id);
-        toast.success("수업이 삭제되었습니다");
-        setIsDeleteModalOpen(false);
-        router.push("/manage-classes");
+    const handleDelete = async () => {
+        setIsSubmitting(true);
+        try {
+            const response = await fetch(`/api/classes/${classData.id}`, {
+                method: "DELETE",
+            });
+
+            if (!response.ok) {
+                throw new Error(await response.text());
+            }
+
+            toast.success("수업이 삭제되었습니다");
+            router.push("/manage-classes");
+        } catch (error) {
+            console.error("Failed to delete class", error);
+            toast.error("수업 삭제에 실패했습니다");
+        } finally {
+            setIsSubmitting(false);
+            setIsDeleteModalOpen(false);
+        }
     };
 
     return (
@@ -163,8 +195,9 @@ export function ClassDetailClient({ classData, isOwner }: ClassDetailClientProps
                         <Button
                             className="flex-1 bg-primary text-white hover:bg-primary/90"
                             onClick={handleEdit}
+                            disabled={isSubmitting}
                         >
-                            수정 완료
+                            {isSubmitting ? "처리 중..." : "수정 완료"}
                         </Button>
                     </div>
                 </div>
@@ -201,8 +234,9 @@ export function ClassDetailClient({ classData, isOwner }: ClassDetailClientProps
                         <Button
                             className="flex-1 bg-red-600 text-white hover:bg-red-700"
                             onClick={handleDelete}
+                            disabled={isSubmitting}
                         >
-                            삭제하기
+                            {isSubmitting ? "삭제 중..." : "삭제하기"}
                         </Button>
                     </div>
                 </div>

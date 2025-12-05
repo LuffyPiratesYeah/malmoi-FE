@@ -4,28 +4,27 @@ import { Logo } from "@/components/ui/Logo";
 import { Button } from "@/components/ui/Button";
 import Link from "next/link";
 import { useAuthStore } from "@/lib/useAuthStore";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export default function OnboardingPage() {
     const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
     const user = useAuthStore((state) => state.user);
-    const router = useRouter();
     const [isLoading, setIsLoading] = useState(true);
+    const primaryCtaHref = isAuthenticated
+        ? user?.userType === "admin"
+            ? "/admin/verification"
+            : "/main"
+        : "/signup";
+    const primaryCtaLabel = isAuthenticated
+        ? user?.userType === "admin"
+            ? "관리자 페이지"
+            : "내 대시보드"
+        : "무료로 시작하기";
 
-    // 로그인 사용자는 /main으로 리다이렉트
     useEffect(() => {
-        // 인증 상태 확인 후 로딩 해제
-        const checkAuth = async () => {
-            if (isAuthenticated) {
-                router.push("/main");
-            } else {
-                setIsLoading(false);
-            }
-        };
-
-        checkAuth();
-    }, [isAuthenticated, router]);
+        // Wait for client-side hydration of auth store
+        setIsLoading(false);
+    }, []);
 
     // 로딩 중이면 로딩 화면 표시
     if (isLoading) {
@@ -53,23 +52,35 @@ export default function OnboardingPage() {
             {/* Simple Header */}
             <header className="border-b border-gray-200/50 bg-white/80 backdrop-blur-md sticky top-0 z-50">
                 <div className="mx-auto max-w-7xl px-6 py-4 flex items-center justify-between">
-                    <Logo size="sm" />
+                        <Logo size="sm" />
                     <div className="flex items-center gap-3">
-                        <Link href="/login">
-                            <Button
-                                variant="outline"
-                                className="h-10 px-5 rounded-full border-gray-300 hover:bg-gray-50 text-sm font-medium"
-                            >
-                                로그인
-                            </Button>
-                        </Link>
-                        <Link href="/signup">
-                            <Button
-                                className="h-10 px-5 rounded-full bg-primary hover:bg-primary/90 text-white text-sm font-medium shadow-lg shadow-blue-200/50"
-                            >
-                                회원가입
-                            </Button>
-                        </Link>
+                        {isAuthenticated ? (
+                            <Link href={primaryCtaHref}>
+                                <Button
+                                    className="h-10 px-5 rounded-full bg-primary hover:bg-primary/90 text-white text-sm font-medium shadow-lg shadow-blue-200/50"
+                                >
+                                    {primaryCtaLabel}
+                                </Button>
+                            </Link>
+                        ) : (
+                            <>
+                                <Link href="/login">
+                                    <Button
+                                        variant="outline"
+                                        className="h-10 px-5 rounded-full border-gray-300 hover:bg-gray-50 text-sm font-medium"
+                                    >
+                                        로그인
+                                    </Button>
+                                </Link>
+                                <Link href="/signup">
+                                    <Button
+                                        className="h-10 px-5 rounded-full bg-primary hover:bg-primary/90 text-white text-sm font-medium shadow-lg shadow-blue-200/50"
+                                    >
+                                        회원가입
+                                    </Button>
+                                </Link>
+                            </>
+                        )}
                     </div>
                 </div>
             </header>
@@ -178,12 +189,12 @@ export default function OnboardingPage() {
                             첫 수업을 예약하고 한국어 실력을 향상시켜보세요
                         </p>
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                            <Link href="/signup" className="w-full sm:w-auto">
+                            <Link href={primaryCtaHref} className="w-full sm:w-auto">
                                 <Button
                                     className="w-full sm:w-auto h-12 px-8 bg-white text-gray-900 hover:bg-gray-50 font-bold rounded-xl shadow-lg"
                                     size="lg"
                                 >
-                                    <p className="text-gray-900 hover:text-white">무료로 시작하기</p>
+                                    <p className="text-gray-900 hover:text-white">{primaryCtaLabel}</p>
                                 </Button>
                             </Link>
                             <Link href="/class" className="w-full sm:w-auto">

@@ -31,7 +31,11 @@ export function Navbar() {
     };
 
     // 메인 링크 경로: 로그인 시 /main, 비로그인 시 /
-    const mainPath = isAuthenticated ? "/main" : "/";
+    const mainPath = isAuthenticated
+        ? user?.userType === "admin"
+            ? "/admin/verification"
+            : "/main"
+        : "/";
 
     return (
         <nav className="border-b border-[#d9d9d9] bg-white h-[60px] flex items-center">
@@ -52,7 +56,7 @@ export function Navbar() {
                             스케줄
                         </Link>
                     )}
-                    {isAuthenticated && user?.userType === "teacher" && (
+                    {isAuthenticated && user?.isTeacher && (
                         <Link href="/manage-classes" className={getLinkClassName("/manage-classes")}>
                             수업 관리
                         </Link>

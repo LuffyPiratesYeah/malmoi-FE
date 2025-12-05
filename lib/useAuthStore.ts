@@ -3,8 +3,12 @@ import { persist, createJSONStorage } from "zustand/middleware";
 
 interface AuthUser {
     id: string;
+    email?: string;
     name: string;
     userType: "student" | "teacher";
+    isTeacher: boolean;
+    profileImage?: string | null;
+    verificationStatus?: "none" | "pending" | "verified";
 }
 
 interface AuthState {
@@ -12,6 +16,7 @@ interface AuthState {
     isAuthenticated: boolean;
     login: (user: AuthUser) => void;
     logout: () => void;
+    updateUser: (data: Partial<AuthUser>) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -29,6 +34,15 @@ export const useAuthStore = create<AuthState>()(
                     user: null,
                     isAuthenticated: false,
                 }),
+            updateUser: (data) =>
+                set((state) =>
+                    state.user
+                        ? {
+                            user: { ...state.user, ...data },
+                            isAuthenticated: state.isAuthenticated,
+                        }
+                        : state
+                ),
         }),
         {
             name: "auth-storage",

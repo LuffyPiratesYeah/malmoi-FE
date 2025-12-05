@@ -4,28 +4,33 @@ import { Navbar } from "@/components/layout/Navbar";
 import { useEffect, useState } from "react";
 import { ClassItem } from "@/types";
 import { ManageClassDetailClient } from "./client";
+import { useParams } from "next/navigation";
 
 interface ManageClassDetailPageProps {
     params: Promise<{ id: string }>;
 }
 
 export default function ManageClassDetailPage({ params }: ManageClassDetailPageProps) {
+    const { id } = useParams<{ id: string }>();
     const [classData, setClassData] = useState<ClassItem | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [classId, setClassId] = useState<string>("");
 
     useEffect(() => {
-        params.then(({ id }) => {
-            setClassId(id);
-            loadClass(id);
-        });
-    }, [params]);
+        if (!id || Array.isArray(id)) {
+            setIsLoading(false);
+            return;
+        }
+        loadClass(id);
+    }, [id]);
 
-    const loadClass = async (id: string) => {
+    const loadClass = async (classId: string) => {
         try {
-            const response = await fetch('/api/classes');
-            const allClasses: ClassItem[] = await response.json();
-            const found = allClasses.find(c => c.id === id);
+            const response = await fetch(`/api/classes/${classId}`, { cache: "no-store" });
+            if (!response.ok) {
+                setClassData(null);
+                return;
+            }
+            const found = await response.json();
             setClassData(found || null);
         } catch (error) {
             console.error("Failed to load class:", error);

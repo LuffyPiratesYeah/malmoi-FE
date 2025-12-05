@@ -3,25 +3,102 @@
 import { Navbar } from "@/components/layout/Navbar";
 import { Button } from "@/components/ui/Button";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import { createClassAction } from "@/app/actions";
+import { useAuthStore } from "@/lib/useAuthStore";
 
 export default function NewClassPage() {
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isCheckingUser, setIsCheckingUser] = useState(true);
+    const user = useAuthStore((state) => state.user);
+    const updateUser = useAuthStore((state) => state.updateUser);
+
+    useEffect(() => {
+        let cancelled = false;
+        const loadUser = async () => {
+            if (!user?.id) {
+                setIsCheckingUser(false);
+                return;
+            }
+            try {
+                const res = await fetch(`/api/users/${user.id}`, { cache: "no-store" });
+                if (!res.ok) return;
+                const fresh = await res.json();
+                if (!cancelled) {
+                    updateUser({
+                        id: fresh.id,
+                        email: fresh.email,
+                        name: fresh.name,
+                        userType: fresh.userType,
+                        isTeacher: fresh.isTeacher,
+                        profileImage: fresh.profileImage,
+                        verificationStatus: fresh.verificationStatus,
+                    });
+                }
+            } catch (error) {
+                console.error("Failed to refresh user", error);
+            } finally {
+                if (!cancelled) setIsCheckingUser(false);
+            }
+        };
+        loadUser();
+        return () => {
+            cancelled = true;
+        };
+    }, [user?.id, updateUser]);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        if (!user?.id || !user.isTeacher) {
+            toast.error("튜터 인증 완료 후 수업을 등록할 수 있습니다. 프로필에서 인증을 진행해주세요.");
+            setTimeout(() => router.push("/profile"), 500);
+            return;
+        }
+
         setIsSubmitting(true);
 
         const formData = new FormData(e.currentTarget);
 
-        toast.success("수업이 등록되었습니다!");
+        const title = formData.get("title") as string;
+        const description = formData.get("description") as string;
+        const level = formData.get("level") as string;
+        const categorySelections = formData.getAll("category").filter(Boolean) as string[];
+        const typeSelections = formData.getAll("type").filter(Boolean) as string[];
 
-        // 서버 액션 호출 - redirect()가 자동으로 페이지 이동시킴
-        await createClassAction(formData);
+        const payload = {
+            title,
+            description,
+            level,
+            category: categorySelections[0] || "일반",
+            type: typeSelections[0] || "영상 · 25분",
+            image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&q=80&w=1000",
+            tutorId: user.id,
+            tutorName: user.name,
+            details: [],
+        };
+
+        try {
+            const response = await fetch("/api/classes", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+            });
+
+            if (!response.ok) {
+                const err = await response.json().catch(() => ({}));
+                throw new Error(err.error || "수업 등록에 실패했습니다");
+            }
+
+            toast.success("수업이 등록되었습니다!");
+            router.push("/manage-classes");
+        } catch (error) {
+            console.error("Failed to create class", error);
+            toast.error("수업 등록에 실패했습니다");
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -34,6 +111,16 @@ export default function NewClassPage() {
                     <p className="text-sm text-gray-500">학생과 함께 수업할 강의를 추가해보세요</p>
                 </div>
 
+                {isCheckingUser ? (
+                    <div className="text-center text-gray-500 py-20">사용자 정보를 확인하는 중...</div>
+                ) : !user?.isTeacher ? (
+                    <div className="text-center space-y-4 py-16">
+                        <p className="text-gray-600">튜터 인증이 완료된 계정만 수업을 등록할 수 있습니다.</p>
+                        <Button className="bg-primary text-white" type="button" onClick={() => router.push("/profile")}>
+                            프로필에서 인증하기
+                        </Button>
+                    </div>
+                ) : (
                 <form onSubmit={handleSubmit} className="space-y-12">
                     {/* Title */}
                     <div className="space-y-4">
@@ -74,7 +161,6 @@ export default function NewClassPage() {
                                 accept=".jpg,.jpeg,.png"
                                 className="hidden"
                                 id="thumbnail-input"
-                                required
                             />
                             <label htmlFor="thumbnail-input" className="flex h-80 cursor-pointer flex-col items-center justify-center rounded-xl border border-gray-200 bg-white hover:bg-gray-50 transition-colors text-center">
                                 <span className="text-sm text-gray-300">사진을 추가해주세요</span>
@@ -141,13 +227,12 @@ export default function NewClassPage() {
                                     <span className="text-red-500">*</span>자료
                                 </label>
                                 <input
-                                    name="materials"
-                                    type="file"
-                                    accept=".pdf,.pptx"
-                                    className="hidden"
-                                    id="materials-input"
-                                    required
-                                />
+                                name="materials"
+                                type="file"
+                                accept=".pdf,.pptx"
+                                className="hidden"
+                                id="materials-input"
+                            />
                                 <label htmlFor="materials-input" className="flex h-20 cursor-pointer flex-col items-center justify-center rounded-xl border border-gray-200 bg-white hover:bg-gray-50 transition-colors text-center">
                                     <span className="text-xs text-gray-300">형식에 맞는 자료를<br/>업로드해주세요</span>
                                 </label>
@@ -170,6 +255,7 @@ export default function NewClassPage() {
                         </Button>
                     </div>
                 </form>
+                )}
             </main>
         </div>
     );

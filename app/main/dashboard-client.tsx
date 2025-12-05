@@ -4,17 +4,38 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ScheduleItem } from "@/types";
 import { cn } from "@/lib/utils";
 
 interface DashboardClientProps {
     schedules: ScheduleItem[];
+    isLoading?: boolean;
 }
 
-export function DashboardClient({ schedules }: DashboardClientProps) {
-    const todaySchedules = schedules.filter(s => s.date === "2025-10-16");
-    const nextSchedule = todaySchedules[0];
+const formatDateLabel = (date: string) => {
+    return new Date(date).toLocaleDateString("ko-KR", {
+        month: "long",
+        day: "numeric",
+        weekday: "short",
+    });
+};
+
+export function DashboardClient({ schedules, isLoading }: DashboardClientProps) {
+    const sortedSchedules = useMemo(
+        () =>
+            [...schedules].sort(
+                (a, b) =>
+                    new Date(`${a.date}T${a.time}`).getTime() -
+                    new Date(`${b.date}T${b.time}`).getTime()
+            ),
+        [schedules]
+    );
+
+    const now = new Date();
+    const today = now.toISOString().slice(0, 10);
+    const nextSchedule = sortedSchedules.find((s) => new Date(`${s.date}T${s.time}`) >= now) || sortedSchedules[0] || null;
+    const todaySchedules = sortedSchedules.filter(s => s.date === today);
 
     // State for checkboxes
     const [prepChecks, setPrepChecks] = useState<boolean[]>([false, false, false]);
@@ -41,12 +62,16 @@ export function DashboardClient({ schedules }: DashboardClientProps) {
                 {/* Left Column (Class Info) */}
                 <div className="lg:col-span-2 space-y-6">
                     <Card className="h-full border border-[#ced4da] shadow-sm">
-                        {nextSchedule ? (
+                        {isLoading ? (
+                            <div className="flex h-full flex-col items-center justify-center text-center py-12">
+                                <p className="text-gray-500">스케줄을 불러오는 중입니다...</p>
+                            </div>
+                        ) : nextSchedule ? (
                             <div>
                                 <div className="flex items-center justify-between mb-8">
                                     <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-1.5 text-sm font-bold text-primary">
                                         <Image src="/watch.svg" alt="Clock" width={16} height={16} />
-                                        오늘 {nextSchedule.time} 수업 예정
+                                        {formatDateLabel(nextSchedule.date)} {nextSchedule.time} 수업 예정
                                     </div>
 
                                     <div className="flex gap-3">
@@ -63,15 +88,18 @@ export function DashboardClient({ schedules }: DashboardClientProps) {
 
                                 <div className="flex items-start gap-6 mb-8">
                                     <div className="h-16 w-16 flex-shrink-0 rounded-full bg-black text-white flex items-center justify-center font-bold text-xl overflow-hidden">
-                                        {/* Mock Avatar if needed, or initials */}
-                                        {nextSchedule.class.tutorName[0]}
+                                        {nextSchedule.class?.tutorName?.[0] || "튜터"}
                                     </div>
                                     <div>
-                                        <h3 className="text-xl font-bold text-gray-900 mb-1">{nextSchedule.class.tutorName} 선생님</h3>
+                                        <h3 className="text-xl font-bold text-gray-900 mb-1">{nextSchedule.class?.tutorName || "튜터"} 선생님</h3>
                                         <p className="text-sm text-gray-500 mb-3">전직 국어 교사 · 한국어교원 2급</p>
                                         <div className="flex gap-2">
-                                            <span className="rounded-md bg-blue-50 px-2.5 py-1 text-xs font-bold text-primary">{nextSchedule.class.category}</span>
-                                            <span className="rounded-md bg-blue-50 px-2.5 py-1 text-xs font-bold text-primary">{nextSchedule.class.level}</span>
+                                            {nextSchedule.class?.category && (
+                                                <span className="rounded-md bg-blue-50 px-2.5 py-1 text-xs font-bold text-primary">{nextSchedule.class.category}</span>
+                                            )}
+                                            {nextSchedule.class?.level && (
+                                                <span className="rounded-md bg-blue-50 px-2.5 py-1 text-xs font-bold text-primary">{nextSchedule.class.level}</span>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -79,11 +107,11 @@ export function DashboardClient({ schedules }: DashboardClientProps) {
                                 <div className="space-y-3 mb-8 text-sm">
                                     <div className="flex items-center">
                                         <span className="w-24 text-gray-500">수업 주제:</span>
-                                        <span className="font-bold text-gray-900 text-base">{nextSchedule.class.title}</span>
+                                        <span className="font-bold text-gray-900 text-base">{nextSchedule.class?.title || "등록된 수업 없음"}</span>
                                     </div>
                                     <div className="flex items-center">
                                         <span className="w-24 text-gray-500">형태:</span>
-                                        <span className="font-medium text-gray-700">1:1 화상수업 · {nextSchedule.class.type} · {nextSchedule.class.level}</span>
+                                        <span className="font-medium text-gray-700">1:1 화상수업 · {nextSchedule.class?.type || "-"} · {nextSchedule.class?.level || "-"}</span>
                                     </div>
                                 </div>
 
@@ -118,27 +146,26 @@ export function DashboardClient({ schedules }: DashboardClientProps) {
                                     수업 시작 10분 전부터 입장할 수 있어요.
                                 </div>
 
-
-                                {/* Weekly Schedule - Moved from bottom */}
+                                {/* Weekly Schedule */}
                                 <Card className="border border-[#ced4da] shadow-sm">
                                     <div className="mb-4 flex items-center justify-between">
-                                        <h3 className="text-base font-bold text-gray-900">이번 주 수업 일정</h3>
+                                        <h3 className="text-base font-bold text-gray-900">다가오는 수업</h3>
                                         <Link href="/schedule" className="text-xs font-medium text-gray-500 underline decoration-gray-300 hover:text-gray-900">
                                             전체 보기
                                         </Link>
                                     </div>
 
-                                    {schedules.length > 0 ? (
+                                    {sortedSchedules.length > 0 ? (
                                         <div className="space-y-3">
-                                            {schedules.slice(0, 3).map((item, i) => (
+                                            {sortedSchedules.slice(0, 3).map((item, i) => (
                                                 <div key={i} className="flex items-center justify-between rounded-lg bg-gray-50 p-3 hover:bg-gray-100 transition-colors group">
                                                     <div className="flex items-center gap-4">
-                                                        <span className="rounded-md bg-gray-200 px-2 py-1 text-xs font-bold text-gray-700 min-w-[60px] text-center">
-                                                            {item.date.slice(5).replace('-', '.')}
+                                                        <span className="rounded-md bg-gray-200 px-2 py-1 text-xs font-bold text-gray-700 min-w-[120px] text-center">
+                                                            {formatDateLabel(item.date)}
                                                         </span>
                                                         <span className="font-bold text-gray-900 text-sm">{item.time.split('-')[0]}</span>
                                                         <div className="flex items-center gap-2">
-                                                            <span className="text-xs text-gray-600">{item.class.tutorName} 선생님</span>
+                                                            <span className="text-xs text-gray-600">{item.class?.tutorName || "튜터"} 선생님</span>
                                                         </div>
                                                     </div>
                                                     <div className="flex gap-2 text-gray-400">
@@ -208,7 +235,7 @@ export function DashboardClient({ schedules }: DashboardClientProps) {
                     <Card title="빠른 수업 예약" subtitle="원하는 시간에 1:1 수업을 빠르게 예약해보세요." className="border border-[#ced4da] shadow-sm">
                         <div className="mb-6 flex items-center gap-2 text-sm font-bold text-gray-900">
                             <Image src="/watch.svg" alt="Calendar" width={20} height={20} className="text-primary" />
-                            오늘 · 10월 16일 (수)
+                            오늘 · {formatDateLabel(today)}
                         </div>
 
                         <div className="space-y-3">
@@ -221,27 +248,28 @@ export function DashboardClient({ schedules }: DashboardClientProps) {
                                     key={time.id}
                                     onClick={() => setSelectedTime(time.id)}
                                     className={cn(
-                                        "w-full rounded-full py-3 text-sm font-medium transition-all",
+                                        "flex w-full items-center justify-between rounded-xl border px-4 py-3 text-sm font-bold transition-colors",
                                         selectedTime === time.id
-                                            ? "bg-primary text-white shadow-md shadow-blue-200"
-                                            : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                                            ? "border-primary bg-blue-50 text-primary"
+                                            : "border-gray-200 text-gray-800 hover:border-primary/50"
                                     )}
                                 >
-                                    <Image src="/watch.svg" alt="Clock" width={16} height={16} className="mr-2 inline-block" /> {time.label}
+                                    <span>{time.label}</span>
+                                    {selectedTime === time.id && (
+                                        <svg className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    )}
                                 </button>
                             ))}
                         </div>
 
-                        <Link href="/class">
-                            <Button className="mt-6 w-full bg-[#13c0ff] hover:bg-[#13c0ff]/90 text-white font-bold h-12" size="lg">
-                                이 시간으로 수업 예약하기
-                            </Button>
-                        </Link>
+                        <Button className="mt-6 w-full bg-primary text-white hover:bg-primary/90">
+                            선택한 시간으로 예약하기
+                        </Button>
                     </Card>
                 </div>
             </div>
-
-
         </main>
     );
 }

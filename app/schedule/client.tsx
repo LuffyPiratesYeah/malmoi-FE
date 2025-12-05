@@ -5,34 +5,60 @@ import { Badge } from "@/components/ui/Badge";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { ScheduleItem } from "@/types";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 
 interface ScheduleClientProps {
     schedules: ScheduleItem[];
+    isLoading?: boolean;
 }
 
-const DATES = [
-    { date: "10월 16일 (수)", fullDate: "2025-10-16", hasDot: true },
-    { date: "10월 17일 (목)", fullDate: "2025-10-17", hasDot: false },
-    { date: "10월 18일 (금)", fullDate: "2025-10-18", hasDot: true },
-    { date: "10월 19일 (토)", fullDate: "2025-10-19", hasDot: false },
-    { date: "10월 20일 (일)", fullDate: "2025-10-20", hasDot: false },
-    { date: "10월 21일 (월)", fullDate: "2025-10-21", hasDot: true },
-    { date: "10월 22일 (화)", fullDate: "2025-10-22", hasDot: false },
-];
+const formatDateLabel = (date: string) => {
+    return new Date(date).toLocaleDateString("ko-KR", {
+        month: "long",
+        day: "numeric",
+        weekday: "short",
+    });
+};
 
-export function ScheduleClient({ schedules }: ScheduleClientProps) {
-    const [selectedDate, setSelectedDate] = useState<string>("2025-10-16");
+export function ScheduleClient({ schedules, isLoading }: ScheduleClientProps) {
+    const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
-    const filteredSchedules = schedules.filter(s => s.date === selectedDate);
+    const today = useMemo(() => new Date(), []);
+    const weekDates = useMemo(() => {
+        const arr: string[] = [];
+        for (let i = 0; i < 7; i++) {
+            const d = new Date(today);
+            d.setDate(d.getDate() + i);
+            arr.push(d.toISOString().slice(0, 10));
+        }
+        return arr;
+    }, [today]);
+
+    const scheduleDates = useMemo(
+        () => Array.from(new Set(schedules.map((s) => s.date))).sort(),
+        [schedules]
+    );
+
+    useEffect(() => {
+        if (scheduleDates.length > 0) {
+            setSelectedDate(scheduleDates[0]);
+        } else {
+            setSelectedDate(weekDates[0]);
+        }
+    }, [scheduleDates, weekDates]);
+
+    const filteredSchedules = selectedDate ? schedules.filter(s => s.date === selectedDate) : [];
+    const activeDateLabel = selectedDate ? formatDateLabel(selectedDate) : "";
 
     return (
         <main className="mx-auto max-w-7xl px-8 py-12">
             <div className="mb-8 flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900">내 수업 스케줄</h1>
-                    <p className="text-sm text-gray-500">이번 주 예약된 {schedules.length}개의 수업이 있어요.</p>
+                    <p className="text-sm text-gray-500">
+                        {isLoading ? "스케줄을 불러오는 중입니다..." : `예약된 수업 ${schedules.length}개가 있어요.`}
+                    </p>
                 </div>
 
                 <div className="flex gap-3">
@@ -73,20 +99,20 @@ export function ScheduleClient({ schedules }: ScheduleClientProps) {
                         </div>
 
                         <div className="space-y-2">
-                            {DATES.map((item, i) => (
+                            {(weekDates.length ? weekDates : [new Date().toISOString().slice(0, 10)]).map((date, i) => (
                                 <button
                                     key={i}
-                                    onClick={() => setSelectedDate(item.fullDate)}
+                                    onClick={() => setSelectedDate(date)}
                                     className={cn(
                                         "flex w-full items-center justify-between rounded-xl px-4 py-3 text-sm font-medium transition-colors",
-                                        selectedDate === item.fullDate
+                                        selectedDate === date
                                             ? "bg-primary text-white shadow-md shadow-blue-200"
                                             : "text-gray-600 hover:bg-gray-50 border border-transparent hover:border-gray-100"
                                     )}
                                 >
-                                    <span>{item.date}</span>
-                                    {item.hasDot && (
-                                        <span className={cn("h-2 w-2 rounded-full", selectedDate === item.fullDate ? "bg-white" : "bg-primary")} />
+                                    <span>{formatDateLabel(date)}</span>
+                                    {schedules.some((s) => s.date === date) && (
+                                        <span className={cn("h-2 w-2 rounded-full", selectedDate === date ? "bg-white" : "bg-primary")} />
                                     )}
                                 </button>
                             ))}
@@ -98,11 +124,13 @@ export function ScheduleClient({ schedules }: ScheduleClientProps) {
                 <div className="flex-1 space-y-8">
                     <div>
                         <h3 className="mb-4 text-lg font-bold text-gray-900">
-                            {DATES.find(d => d.fullDate === selectedDate)?.date} · 수업 {filteredSchedules.length}개
+                            {activeDateLabel || "일정"} · 수업 {filteredSchedules.length}개
                         </h3>
 
                         <div className="space-y-4">
-                            {filteredSchedules.length > 0 ? (
+                            {isLoading ? (
+                                <div className="py-20 text-center text-gray-500">스케줄을 불러오는 중입니다...</div>
+                            ) : filteredSchedules.length > 0 ? (
                                 filteredSchedules.map((schedule) => (
                                     <div key={schedule.id} className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
                                         <div className="mb-6 flex items-start justify-between">
@@ -115,11 +143,11 @@ export function ScheduleClient({ schedules }: ScheduleClientProps) {
 
                                         <div className="mb-6 flex items-center gap-4">
                                             <div className="h-12 w-12 flex-shrink-0 rounded-full bg-gray-200 flex items-center justify-center font-bold text-gray-600 overflow-hidden">
-                                                {schedule.class.tutorName[0]}
+                                                {schedule.class?.tutorName?.[0] || "튜터"}
                                             </div>
                                             <div>
-                                                <div className="font-bold text-gray-900 text-lg">{schedule.class.tutorName} 선생님</div>
-                                                <div className="text-sm text-gray-500">{schedule.class.level}</div>
+                                                <div className="font-bold text-gray-900 text-lg">{schedule.class?.tutorName || "튜터"} 선생님</div>
+                                                <div className="text-sm text-gray-500">{schedule.class?.level || ""}</div>
                                             </div>
                                         </div>
 
@@ -137,7 +165,7 @@ export function ScheduleClient({ schedules }: ScheduleClientProps) {
                                         <div className="space-y-2 text-sm bg-gray-50 p-4 rounded-xl">
                                             <div className="flex">
                                                 <span className="w-16 text-gray-500 font-medium">교재:</span>
-                                                <span className="text-gray-900 font-medium">{schedule.class.title}</span>
+                                                <span className="text-gray-900 font-medium">{schedule.class?.title || "등록된 교재 없음"}</span>
                                             </div>
                                             <div className="flex">
                                                 <span className="w-16 text-gray-500 font-medium">노트:</span>

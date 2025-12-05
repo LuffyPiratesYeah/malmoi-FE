@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/Input";
 import { Logo } from "@/components/ui/Logo";
 import Link from "next/link";
 import { useAuthStore } from "@/lib/useAuthStore";
-import { db } from "@/lib/db";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -22,27 +21,41 @@ export default function LoginPage() {
         setLoading(true);
 
         const formData = new FormData(e.currentTarget);
-        const username = formData.get("id") as string;
+        const email = formData.get("email") as string;
         const password = formData.get("password") as string;
 
         try {
-            const user = await db.auth.login(username, password);
+            // Call API route for login
+            const response = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email, password }),
+            });
 
-            if (!user) {
-                setError("아이디 또는 비밀번호가 올바르지 않습니다.");
+            const data = await response.json();
+
+            if (!response.ok) {
+                setError(data.error || "아이디 또는 비밀번호가 올바르지 않습니다.");
                 setLoading(false);
                 return;
             }
 
             // Login successful
             login({
-                id: user.id,
-                name: user.name,
-                userType: user.userType,
+                id: data.user.id,
+                email: data.user.email,
+                name: data.user.name,
+                userType: data.user.userType,
+                isTeacher: data.user.isTeacher,
+                profileImage: data.user.profileImage,
+                verificationStatus: data.user.verificationStatus,
             });
 
-            // Redirect to home
-            router.push("/");
+            // Redirect to dashboard without polluting history
+            const destination = data.user.userType === "admin" ? "/admin/verification" : "/main";
+            router.replace(destination);
         } catch (err) {
             setError("로그인 중 오류가 발생했습니다.");
             setLoading(false);
@@ -77,9 +90,9 @@ export default function LoginPage() {
                 <form onSubmit={handleSubmit} className="space-y-10">
                     <div className="space-y-8">
                         <Input
-                            name="id"
-                            placeholder="아이디를 입력해주세요"
-                            type="text"
+                            name="email"
+                            placeholder="이메일을 입력해주세요"
+                            type="email"
                             required
                             disabled={loading}
                         />

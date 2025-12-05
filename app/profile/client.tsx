@@ -3,18 +3,17 @@
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useAuthStore } from "@/lib/useAuthStore";
 import toast from "react-hot-toast";
 import { ClassItem, ScheduleItem } from "@/types";
-import { verifyTeacherAction } from "@/app/actions";
 
-
-interface ProfileClientProps { }
+type ProfileClientProps = Record<string, never>;
 
 export function ProfileClient({ }: ProfileClientProps) {
     const user = useAuthStore((state) => state.user);
+    const updateUser = useAuthStore((state) => state.updateUser);
     // Verification State
     const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
     const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
@@ -30,30 +29,54 @@ export function ProfileClient({ }: ProfileClientProps) {
         newPassword: "",
     });
 
-    useEffect(() => {
-        if (user?.userType === "student") {
-            loadEnrolledClasses();
-        }
-    }, [user?.id, user?.userType]);
-
-    const loadEnrolledClasses = async () => {
+    const loadEnrolledClasses = useCallback(async () => {
         try {
-            const scheduleResponse = await fetch('/api/schedules');
+            if (!user?.id) return;
+            const scheduleResponse = await fetch(`/api/schedules?studentId=${user.id}`);
             const allSchedules: ScheduleItem[] = await scheduleResponse.json();
-            const mySchedules = allSchedules.filter(s => s.studentId === user?.id);
             const uniqueClasses = Array.from(
-                new Map(mySchedules.map(s => [s.class.id, s.class])).values()
+                new Map(allSchedules.map(s => [s.class.id, s.class])).values()
             );
             setEnrolledClasses(uniqueClasses);
         } catch (error) {
             console.error("Failed to load enrolled classes:", error);
         }
-    };
+    }, [user?.id]);
+
+    useEffect(() => {
+        if (user?.userType === "student") {
+            loadEnrolledClasses();
+        }
+    }, [loadEnrolledClasses, user?.userType]);
 
     const handleVerificationSubmit = async () => {
-        await verifyTeacherAction();
-        setIsVerifyModalOpen(false);
-        setIsSuccessModalOpen(true);
+        if (!user?.id) {
+            toast.error("로그인이 필요합니다");
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/users/${user.id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    verificationStatus: "pending",
+                    isTeacher: false,
+                    userType: "teacher",
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error(await response.text());
+            }
+
+            updateUser({ verificationStatus: "pending", isTeacher: false, userType: "teacher" });
+            setIsVerifyModalOpen(false);
+            setIsSuccessModalOpen(true);
+        } catch (error) {
+            console.error("Failed to submit verification", error);
+            toast.error("인증 요청에 실패했습니다");
+        }
     };
 
     const handleSuccessConfirm = () => {
@@ -102,7 +125,7 @@ export function ProfileClient({ }: ProfileClientProps) {
                 <div className="flex items-center justify-between border-b border-gray-200 pb-8">
                     <span className="w-32 text-sm font-bold text-gray-900">튜터 인증</span>
                     <div className="flex-1">
-                        {user?.userType === "teacher" ? (
+                        {user?.isTeacher ? (
                             <div className="flex items-center gap-3">
                                 <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
                                     인증 완료
@@ -111,11 +134,18 @@ export function ProfileClient({ }: ProfileClientProps) {
                                     → 수업 관리하러 가기
                                 </Link>
                             </div>
+                        ) : user?.verificationStatus === "pending" ? (
+                            <div className="flex items-center gap-3">
+                                <span className="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">
+                                    검토 중
+                                </span>
+                                <span className="text-sm text-gray-500">관리자 승인 후 튜터 권한이 부여됩니다.</span>
+                            </div>
                         ) : (
                             <span className="text-gray-500">미인증</span>
                         )}
                     </div>
-                    {user?.userType === "student" && (
+                    {!user?.isTeacher && user?.verificationStatus !== "pending" && (
                         <Button
                             variant="primary"
                             size="sm"
@@ -164,7 +194,7 @@ export function ProfileClient({ }: ProfileClientProps) {
             >
                 <div className="space-y-6">
                     <p className="text-center text-sm text-gray-500">
-                        튜터로써 활동하기 위해선 인증이 필요해요
+                        튜터로써 활동하기 위해선 인증이 필요해요. 서류를 업로드해 승인 요청을 보내주세요.
                     </p>
 
                     <div className="space-y-4">
