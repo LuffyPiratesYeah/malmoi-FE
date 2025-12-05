@@ -1,41 +1,58 @@
 "use client";
 
-import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
+import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { useState } from "react";
-import { ClassItem, User } from "@/types";
-import { verifyTeacherAction } from "@/app/actions";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/lib/useAuthStore";
+import toast from "react-hot-toast";
+import { ClassItem, ScheduleItem } from "@/types";
+import { verifyTeacherAction } from "@/app/actions";
 
-interface ProfileClientProps {
-    user: User;
-    myClasses: ClassItem[];
-}
 
-type Tab = "info" | "classes";
+interface ProfileClientProps { }
 
-export function ProfileClient({ user, myClasses }: ProfileClientProps) {
-    const [activeTab, setActiveTab] = useState<Tab>("info");
-
+export function ProfileClient({ }: ProfileClientProps) {
+    const user = useAuthStore((state) => state.user);
     // Verification State
-    const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
+    const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
     const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
     const [uploadedFiles, setUploadedFiles] = useState<{ type: string; name: string }[]>([]);
+    const [enrolledClasses, setEnrolledClasses] = useState<ClassItem[]>([]);
 
     // Edit Profile State
     const [isEditProfileModalOpen, setIsEditProfileModalOpen] = useState(false);
     const [editForm, setEditForm] = useState({
-        name: user.name,
-        email: user.email,
+        name: user?.name || "",
+        email: "",
         password: "",
         newPassword: "",
     });
 
+    useEffect(() => {
+        if (user?.userType === "student") {
+            loadEnrolledClasses();
+        }
+    }, [user?.id, user?.userType]);
+
+    const loadEnrolledClasses = async () => {
+        try {
+            const scheduleResponse = await fetch('/api/schedules');
+            const allSchedules: ScheduleItem[] = await scheduleResponse.json();
+            const mySchedules = allSchedules.filter(s => s.studentId === user?.id);
+            const uniqueClasses = Array.from(
+                new Map(mySchedules.map(s => [s.class.id, s.class])).values()
+            );
+            setEnrolledClasses(uniqueClasses);
+        } catch (error) {
+            console.error("Failed to load enrolled classes:", error);
+        }
+    };
+
     const handleVerificationSubmit = async () => {
         await verifyTeacherAction();
-        setIsVerificationModalOpen(false);
+        setIsVerifyModalOpen(false);
         setIsSuccessModalOpen(true);
     };
 
@@ -51,166 +68,98 @@ export function ProfileClient({ user, myClasses }: ProfileClientProps) {
 
     return (
         <div className="space-y-8">
-            {/* Tabs */}
-            <div className="flex border-b border-gray-200">
-                <button
-                    onClick={() => setActiveTab("info")}
-                    className={cn(
-                        "pb-4 px-4 text-sm font-bold transition-colors relative",
-                        activeTab === "info"
-                            ? "text-gray-900"
-                            : "text-gray-500 hover:text-gray-700"
-                    )}
-                >
-                    내 정보
-                    {activeTab === "info" && (
-                        <div className="absolute bottom-0 left-0 h-0.5 w-full bg-gray-900" />
-                    )}
-                </button>
-                <button
-                    onClick={() => setActiveTab("classes")}
-                    className={cn(
-                        "pb-4 px-4 text-sm font-bold transition-colors relative",
-                        activeTab === "classes"
-                            ? "text-gray-900"
-                            : "text-gray-500 hover:text-gray-700"
-                    )}
-                >
-                    {user.isTeacher ? "수업 관리" : "수업 신청 내역"}
-                    {activeTab === "classes" && (
-                        <div className="absolute bottom-0 left-0 h-0.5 w-full bg-gray-900" />
-                    )}
-                </button>
-            </div>
+            {/* User Info */}
+            <div className="space-y-8">
+                {/* Password */}
+                <div className="flex items-center justify-between border-b border-gray-200 pb-8">
+                    <span className="w-32 text-sm font-bold text-gray-900">비밀번호</span>
+                    <div className="flex-1 text-2xl tracking-widest text-gray-900">••••••••</div>
+                    <Button
+                        variant="primary"
+                        size="sm"
+                        className="w-24 rounded-full bg-primary text-white"
+                        onClick={() => setIsEditProfileModalOpen(true)}
+                    >
+                        변경
+                    </Button>
+                </div>
 
-            {/* Content */}
-            {activeTab === "info" ? (
-                <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    {/* Password */}
-                    <div className="flex items-center justify-between border-b border-gray-200 pb-8">
-                        <span className="w-32 text-sm font-bold text-gray-900">비밀번호</span>
-                        <div className="flex-1 text-2xl tracking-widest text-gray-900">••••••••</div>
-                        <Button
-                            variant="primary"
-                            size="sm"
-                            className="w-24 rounded-full bg-primary text-white"
-                            onClick={() => setIsEditProfileModalOpen(true)}
-                        >
-                            변경
-                        </Button>
-                    </div>
+                {/* Email */}
+                <div className="flex items-center justify-between border-b border-gray-200 pb-8">
+                    <span className="w-32 text-sm font-bold text-gray-900">이름</span>
+                    <div className="flex-1 text-gray-500">{user?.name}</div>
+                    <Button
+                        variant="primary"
+                        size="sm"
+                        className="w-24 rounded-full bg-primary text-white"
+                        onClick={() => setIsEditProfileModalOpen(true)}
+                    >
+                        수정
+                    </Button>
+                </div>
 
-                    {/* Email */}
-                    <div className="flex items-center justify-between border-b border-gray-200 pb-8">
-                        <span className="w-32 text-sm font-bold text-gray-900">이메일</span>
-                        <div className="flex-1 text-gray-500">{user.email}</div>
-                        <Button
-                            variant="primary"
-                            size="sm"
-                            className="w-24 rounded-full bg-primary text-white"
-                            onClick={() => setIsEditProfileModalOpen(true)}
-                        >
-                            수정
-                        </Button>
-                    </div>
-
-                    {/* Teacher Verification Status */}
-                    <div className="flex items-center justify-between border-b border-gray-200 pb-8">
-                        <span className="w-32 text-sm font-bold text-gray-900">튜터 인증</span>
-                        <div className="flex-1">
-                            {user.isTeacher ? (
+                {/* Teacher Verification Status */}
+                <div className="flex items-center justify-between border-b border-gray-200 pb-8">
+                    <span className="w-32 text-sm font-bold text-gray-900">튜터 인증</span>
+                    <div className="flex-1">
+                        {user?.userType === "teacher" ? (
+                            <div className="flex items-center gap-3">
                                 <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
                                     인증 완료
                                 </span>
-                            ) : (
-                                <span className="text-gray-500">미인증</span>
-                            )}
-                        </div>
-                        {!user.isTeacher && (
-                            <Button
-                                variant="primary"
-                                size="sm"
-                                className="w-24 rounded-full bg-[#0F766E] text-white hover:bg-[#0F766E]/90"
-                                onClick={() => setIsVerificationModalOpen(true)}
-                            >
-                                인증하기
-                            </Button>
-                        )}
-                    </div>
-                </div>
-            ) : (
-                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    {user.isTeacher ? (
-                        <>
-                            <div className="flex items-center justify-between">
-                                <h2 className="text-xl font-bold text-gray-900">내가 등록한 수업</h2>
-                                <Link href="/class/new">
-                                    <Button className="bg-primary text-white hover:bg-primary/90">
-                                        + 새 수업 등록
-                                    </Button>
+                                <Link href="/manage-classes" className="text-sm text-primary hover:underline font-medium">
+                                    → 수업 관리하러 가기
                                 </Link>
                             </div>
+                        ) : (
+                            <span className="text-gray-500">미인증</span>
+                        )}
+                    </div>
+                    {user?.userType === "student" && (
+                        <Button
+                            variant="primary"
+                            size="sm"
+                            className="w-24 rounded-full bg-[#0F766E] text-white hover:bg-[#0F766E]/90"
+                            onClick={() => setIsVerifyModalOpen(true)}
+                        >
+                            인증하기
+                        </Button>
+                    )}
+                </div>
+            </div>
 
-                            {myClasses.length > 0 ? (
-                                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                                    {myClasses.map((cls, i) => (
-                                        <div key={i} className="group overflow-hidden rounded-2xl border border-gray-200 bg-white transition-shadow hover:shadow-lg">
-                                            <div className="relative h-48 bg-gray-200">
-                                                <img src={cls.image} alt={cls.title} className="h-full w-full object-cover" />
-                                                <span className="absolute right-4 top-4 rounded-full bg-white/90 px-3 py-1 text-xs font-bold text-gray-900 backdrop-blur-sm">
-                                                    {cls.category}
-                                                </span>
-                                            </div>
-                                            <div className="p-6">
-                                                <h3 className="mb-2 text-lg font-bold text-gray-900">{cls.title}</h3>
-                                                <div className="mb-4 flex items-center gap-2 text-xs">
-                                                    <span className="bg-blue-50 text-primary px-2 py-1 rounded font-bold">
-                                                        {cls.level}
-                                                    </span>
-                                                    <span className="text-gray-500">{cls.type}</span>
-                                                </div>
-                                                <p className="mb-6 text-sm text-gray-500 line-clamp-2">
-                                                    {cls.description}
-                                                </p>
-                                                <Link href={`/class/${cls.id}`}>
-                                                    <Button variant="outline" className="w-full rounded-lg">관리하기</Button>
-                                                </Link>
+            {/* Enrolled Classes for Students */}
+            {user?.userType === "student" && enrolledClasses.length > 0 && (
+                <div className="rounded-2xl border border-gray-200 bg-white p-8">
+                    <div className="mb-6">
+                        <h3 className="text-lg font-bold text-gray-900 mb-1">수강 중인 수업</h3>
+                        <p className="text-sm text-gray-500">현재 등록된 수업 목록입니다</p>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {enrolledClasses.map((cls) => (
+                            <Link key={cls.id} href={`/class/${cls.id}`}>
+                                <div className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                                    <div className="flex gap-3">
+                                        <img src={cls.image} alt={cls.title} className="w-16 h-16 rounded object-cover" />
+                                        <div className="flex-1">
+                                            <h4 className="font-bold text-gray-900 text-sm mb-1">{cls.title}</h4>
+                                            <div className="flex items-center gap-2 text-xs text-gray-500">
+                                                <span className="bg-blue-50 text-primary px-2 py-0.5 rounded font-medium">{cls.level}</span>
+                                                <span>{cls.category}</span>
                                             </div>
                                         </div>
-                                    ))}
+                                    </div>
                                 </div>
-                            ) : (
-                                <div className="py-20 text-center rounded-2xl border border-dashed border-gray-200 bg-gray-50">
-                                    <p className="text-gray-500 mb-4">등록된 수업이 없습니다.</p>
-                                    <Link href="/class/new">
-                                        <Button>첫 수업 등록하기</Button>
-                                    </Link>
-                                </div>
-                            )}
-                        </>
-                    ) : (
-                        <div className="flex flex-col items-center justify-center py-20 rounded-2xl border border-gray-200 bg-gray-50 text-center">
-                            <h3 className="text-xl font-bold text-gray-900 mb-2">아직 튜터가 아니에요!</h3>
-                            <p className="text-gray-500 mb-8">
-                                튜터 인증을 완료하고 나만의 수업을 개설해보세요.<br />
-                                학생들과 만나 지식을 공유할 수 있습니다.
-                            </p>
-                            <Button
-                                onClick={() => setIsVerificationModalOpen(true)}
-                                className="rounded-full bg-[#0F766E] px-8 py-3 text-white hover:bg-[#0F766E]/90"
-                                size="lg"
-                            >
-                                선생님 인증하러 가기
-                            </Button>
-                        </div>
-                    )}
+                            </Link>
+                        ))}
+                    </div>
                 </div>
             )}
 
             {/* Verification Modal */}
             <Modal
-                isOpen={isVerificationModalOpen}
-                onClose={() => setIsVerificationModalOpen(false)}
+                isOpen={isVerifyModalOpen}
+                onClose={() => setIsVerifyModalOpen(false)}
                 title="선생님 인증"
             >
                 <div className="space-y-6">
@@ -254,7 +203,7 @@ export function ProfileClient({ user, myClasses }: ProfileClientProps) {
                         <Button
                             variant="outline"
                             className="flex-1"
-                            onClick={() => setIsVerificationModalOpen(false)}
+                            onClick={() => setIsVerifyModalOpen(false)}
                         >
                             취소
                         </Button>

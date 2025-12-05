@@ -3,9 +3,27 @@
 import { Navbar } from "@/components/layout/Navbar";
 import { Button } from "@/components/ui/Button";
 import Link from "next/link";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 import { createClassAction } from "@/app/actions";
 
 export default function NewClassPage() {
+    const router = useRouter();
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+
+        const formData = new FormData(e.currentTarget);
+
+        toast.success("수업이 등록되었습니다!");
+
+        // 서버 액션 호출 - redirect()가 자동으로 페이지 이동시킴
+        await createClassAction(formData);
+    };
+
     return (
         <div className="min-h-screen bg-white pb-20">
             <Navbar />
@@ -16,7 +34,7 @@ export default function NewClassPage() {
                     <p className="text-sm text-gray-500">학생과 함께 수업할 강의를 추가해보세요</p>
                 </div>
 
-                <form action={createClassAction} className="space-y-12">
+                <form onSubmit={handleSubmit} className="space-y-12">
                     {/* Title */}
                     <div className="space-y-4">
                         <label className="flex items-center gap-1 text-sm font-medium text-gray-600">
@@ -119,13 +137,17 @@ export default function NewClassPage() {
                     </div>
 
                     <div className="flex justify-center gap-4 pt-8">
-                        <Link href="/class" className="w-40">
+                        <Link href="/manage-classes" className="w-40">
                             <Button variant="outline" className="w-full" type="button">
                                 취소
                             </Button>
                         </Link>
-                        <Button className="w-40 bg-primary hover:bg-primary/90" type="submit">
-                            추가하기
+                        <Button
+                            className="w-40 bg-primary hover:bg-primary/90"
+                            type="submit"
+                            disabled={isSubmitting}
+                        >
+                            {isSubmitting ? "등록 중..." : "추가하기"}
                         </Button>
                     </div>
                 </form>

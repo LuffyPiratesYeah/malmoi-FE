@@ -1,5 +1,26 @@
 import { ClassItem, ScheduleItem, User } from "@/types";
 
+// localStorage helper functions (클라이언트에서만 실행)
+const getClassesFromStorage = (): ClassItem[] => {
+    if (typeof window === 'undefined') return [];
+    try {
+        const stored = localStorage.getItem('malmoi-classes');
+        return stored ? JSON.parse(stored) : [];
+    } catch {
+        return [];
+    }
+};
+
+const saveClassesToStorage = (classes: ClassItem[]) => {
+    if (typeof window !== 'undefined') {
+        try {
+            localStorage.setItem('malmoi-classes', JSON.stringify(classes));
+        } catch (e) {
+            console.error("Failed to save to localStorage:", e);
+        }
+    }
+};
+
 // Initial Mock Data
 let users: User[] = [
     {
@@ -34,25 +55,26 @@ const credentials = [
     { username: "teacher", password: "1234", userId: "teacher-1" },
 ];
 
-let classes: ClassItem[] = [
+// 초기 목 데이터
+const initialClasses: ClassItem[] = [
     {
-        id: "1",
-        title: "회의에서 사용하는 핵심 표현",
-        description: "실제 회의 상황을 기반으로 회의 시작, 안건 소개, 의견 제시 표현을 연습합니다.",
+        id: "class-1",
+        title: "비즈니스 한국어 - 회의 표현",
+        description: "직장에서 바로 사용할 수 있는 회의 관련 표현을 배우고 연습합니다.",
         level: "중급 (TOPIK 3-4)",
         type: "영상 · 25분",
         category: "비즈니스",
         image: "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?auto=format&fit=crop&q=80&w=1000",
-        tutorId: "tutor-1",
-        tutorName: "김지은 튜터",
+        tutorId: "teacher-1", // 현재 선생님
+        tutorName: "선생님",
         details: [
-            "실제 회의에서 사용되는 상황을 기반으로 연습을 진행합니다.",
+            "회의에서 자주 사용되는 필수 표현을 익힙니다.",
             "회의를 시작할 때 활용할 수 있는 적절한 표현을 익힙니다.",
             "안건을 소개하는 다양한 표현 방식도 함께 연습합니다.",
         ],
     },
     {
-        id: "2",
+        id: "class-2",
         title: "드라마로 배우는 일상 표현",
         description: "인기 드라마 속 대사를 통해 자연스러운 일상 한국어를 배워봅니다.",
         level: "입문 (TOPIK 1-2)",
@@ -63,18 +85,18 @@ let classes: ClassItem[] = [
         tutorName: "박민수 튜터",
     },
     {
-        id: "3",
+        id: "class-3",
         title: "TOPIK II 쓰기 완벽 대비",
         description: "TOPIK II 쓰기 영역의 51번부터 54번까지 문제 유형별 전략을 학습합니다.",
         level: "중급 (TOPIK 3-4)",
         type: "PDF · 45분",
         category: "시험 대비",
         image: "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&q=80&w=1000",
-        tutorId: "tutor-1",
-        tutorName: "김지은 튜터",
+        tutorId: "teacher-1", // 현재 선생님
+        tutorName: "선생님",
     },
     {
-        id: "4",
+        id: "class-4",
         title: "대학 생활 필수 표현",
         description: "한국 대학에서 필요한 수강신청, 과제 제출, 교수님과의 대화 등을 배웁니다.",
         level: "중급 (TOPIK 3-4)",
@@ -86,24 +108,44 @@ let classes: ClassItem[] = [
     },
 ];
 
+// localStorage에서 불러오거나 초기 데이터 사용
+let classes: ClassItem[] = (() => {
+    const stored = getClassesFromStorage();
+    if (stored.length > 0) {
+        console.log("Loading classes from localStorage:", stored.length);
+        return stored;
+    }
+    console.log("Using initial classes");
+    return [...initialClasses];
+})();
+
 let schedules: ScheduleItem[] = [
     {
         id: "sch-1",
-        classId: "1",
+        classId: "class-1",
         date: "2025-10-16",
-        time: "21:00",
+        time: "20:00",
         status: "scheduled",
         studentId: "user-1",
         class: classes[0],
     },
     {
         id: "sch-2",
-        classId: "2",
-        date: "2025-10-16",
-        time: "18:30",
+        classId: "class-1",
+        date: "2025-10-18",
+        time: "21:00",
         status: "scheduled",
-        studentId: "user-1",
-        class: classes[1],
+        studentId: "student-1", // 학생 계정이 class-1 수업 수강 중
+        class: classes[0],
+    },
+    {
+        id: "sch-3",
+        classId: "class-3",
+        date: "2025-10-20",
+        time: "19:00",
+        status: "scheduled",
+        studentId: "student-1", // 학생 계정이 class-3 수업도 수강 중
+        class: classes[2],
     },
 ];
 
@@ -133,16 +175,30 @@ export const db = {
         },
     },
     class: {
-        getAll: async () => [...classes],
+        getAll: async () => {
+            console.log("Getting all classes, count:", classes.length);
+            return [...classes];
+        },
         getById: async (id: string) => classes.find((c) => c.id === id) || null,
         create: async (data: Omit<ClassItem, "id" | "tutorId" | "tutorName">) => {
+            console.log("DB.class.create 호출됨");
+            console.log("현재 classes 배열 길이:", classes.length);
+
+            // Get current user (who is creating the class)
+            const currentUser = await db.user.getCurrent();
+            console.log("Current user:", currentUser);
+
             const newClass: ClassItem = {
                 ...data,
-                id: Math.random().toString(36).substr(2, 9),
-                tutorId: "user-1", // Current user is creating it
-                tutorName: users[0].name,
+                id: `class-${Date.now()}`, // Generate unique ID with timestamp
+                tutorId: currentUser.id,
+                tutorName: currentUser.name,
             };
+
+            console.log("New class object:", newClass);
             classes.push(newClass);
+            console.log("추가 후 classes 배열 길이:", classes.length);
+
             return newClass;
         },
     },
