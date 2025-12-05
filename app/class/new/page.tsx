@@ -44,77 +44,96 @@ export default function NewClassPage() {
                         />
                     </div>
 
-                    {/* Thumbnail */}
-                    <div className="space-y-4">
-                        <label className="flex items-center gap-1 text-sm font-medium text-gray-600">
-                            <span className="text-red-500">*</span>썸네일 추가하기
-                        </label>
-                        <div className="flex h-64 w-full cursor-pointer flex-col items-center justify-center rounded-xl border border-gray-200 bg-white hover:bg-gray-50">
-                            <span className="text-sm text-gray-300">사진을 추가해주세요</span>
-                            <span className="text-xs text-gray-300">600X500 이하</span>
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-12 lg:grid-cols-2">
-                        {/* Level */}
-                        <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-8">
+                        {/* Thumbnail */}
+                        <div className="space-y-2">
                             <label className="flex items-center gap-1 text-sm font-medium text-gray-600">
-                                <span className="text-red-500">*</span>레벨
+                                <span className="text-red-500">*</span>썸네일 추가하기
                             </label>
-                            <div className="flex flex-wrap gap-2">
-                                {["입문 (TOPIK 1-2)", "중급 (TOPIK 3-4)", "고급 (TOPIK 5-6)"].map((level) => (
-                                    <label key={level} className="cursor-pointer">
-                                        <input type="radio" name="level" value={level} className="peer sr-only" required />
-                                        <span className="inline-block rounded-full bg-gray-100 px-4 py-2 text-xs font-medium text-gray-600 transition-colors peer-checked:bg-primary peer-checked:text-white hover:bg-gray-200">
-                                            {level}
-                                        </span>
-                                    </label>
-                                ))}
-                            </div>
+                            <input
+                                name="thumbnail"
+                                type="file"
+                                accept=".jpg,.jpeg,.png"
+                                className="hidden"
+                                id="thumbnail-input"
+                                required
+                            />
+                            <label htmlFor="thumbnail-input" className="flex h-80 cursor-pointer flex-col items-center justify-center rounded-xl border border-gray-200 bg-white hover:bg-gray-50 transition-colors text-center">
+                                <span className="text-sm text-gray-300">사진을 추가해주세요</span>
+                                <span className="text-xs text-gray-300">600X500 이하</span>
+                            </label>
                         </div>
 
-                        {/* Goal */}
-                        <div className="space-y-4">
-                            <label className="flex items-center gap-1 text-sm font-medium text-gray-600">
-                                <span className="text-red-500">*</span>학습목표
-                            </label>
-                            <div className="flex flex-wrap gap-2">
-                                {["비즈니스", "유학/학업", "K-Drama/K-POP", "일상 회화", "시험 대비"].map((goal) => (
-                                    <label key={goal} className="cursor-pointer">
-                                        <input type="radio" name="category" value={goal} className="peer sr-only" required />
-                                        <span className="inline-block rounded-full bg-gray-100 px-4 py-2 text-xs font-medium text-gray-600 transition-colors peer-checked:bg-primary peer-checked:text-white hover:bg-gray-200">
-                                            {goal}
-                                        </span>
-                                    </label>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Format */}
-                    <div className="space-y-4">
-                        <label className="flex items-center gap-1 text-sm font-medium text-gray-600">
-                            <span className="text-red-500">*</span>형식
-                        </label>
-                        <div className="flex flex-wrap gap-2">
-                            {["영상 강의", "읽기 자료(PDF)", "실전 연습(퀴즈)", "수업 녹화"].map((format) => (
-                                <label key={format} className="cursor-pointer">
-                                    <input type="radio" name="type" value={format} className="peer sr-only" required />
-                                    <span className="inline-block rounded-full bg-gray-100 px-4 py-2 text-xs font-medium text-gray-600 transition-colors peer-checked:bg-primary peer-checked:text-white hover:bg-gray-200">
-                                        {format}
-                                    </span>
+                        {/* Right side grid */}
+                        <div className="grid grid-cols-1 gap-4">
+                            {/* 레벨 */}
+                            <div className="space-y-2">
+                                <label className="flex items-center gap-1 text-sm font-medium text-gray-600">
+                                    <span className="text-red-500">*</span>레벨
                                 </label>
-                            ))}
-                        </div>
-                    </div>
+                                <div className="flex flex-wrap gap-2">
+                                    {["입문 (TOPIK 1-2)", "중급 (TOPIK 3-4)", "고급 (TOPIK 5-6)"].map((level) => (
+                                        <label key={level} className="cursor-pointer">
+                                            <input type="radio" name="level" value={level} className="peer sr-only" required />
+                                            <span className="inline-block rounded-full bg-gray-100 px-3 py-2 text-xs font-medium text-gray-600 transition-colors peer-checked:bg-primary peer-checked:text-white hover:bg-gray-200">
+                                                {level}
+                                            </span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
 
-                    {/* Materials */}
-                    <div className="space-y-4">
-                        <label className="flex items-center gap-1 text-sm font-medium text-gray-600">
-                            <span className="text-red-500">*</span>자료
-                        </label>
-                        <div className="flex h-16 w-full cursor-pointer items-center justify-center rounded-xl border border-gray-200 bg-white hover:bg-gray-50">
-                            <span className="text-sm text-gray-300">형식에 맞는 자료를 업로드해주세요</span>
+                            {/* Goal */}
+                            <div className="space-y-2">
+                                <label className="flex items-center gap-1 text-sm font-medium text-gray-600">
+                                    <span className="text-red-500">*</span>학습목표
+                                </label>
+                                <div className="flex flex-wrap gap-1">
+                                    {["비즈니스", "유학/학업", "K-Drama/K-POP", "일상 회화", "시험 대비"].map((goal) => (
+                                        <label key={goal} className="cursor-pointer">
+                                            <input type="checkbox" name="category" value={goal} className="peer sr-only" />
+                                            <span className="inline-block rounded-full bg-gray-100 px-3 py-2 text-xs font-medium text-gray-600 transition-colors peer-checked:bg-primary peer-checked:text-white hover:bg-gray-200">
+                                                {goal}
+                                            </span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Format */}
+                            <div className="space-y-2">
+                                <label className="flex items-center gap-1 text-sm font-medium text-gray-600">
+                                    <span className="text-red-500">*</span>형식
+                                </label>
+                                <div className="flex flex-wrap gap-2">
+                                    {["영상 강의", "읽기 자료(PDF)", "실전 연습(퀴즈)", "수업 녹화"].map((format) => (
+                                        <label key={format} className="cursor-pointer">
+                                            <input type="checkbox" name="type" value={format} className="peer sr-only" />
+                                            <span className="inline-block rounded-full bg-gray-100 px-3 py-2 text-xs font-medium text-gray-600 transition-colors peer-checked:bg-primary peer-checked:text-white hover:bg-gray-200">
+                                                {format}
+                                            </span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Materials */}
+                            <div className="space-y-4">
+                                <label className="flex items-center gap-1 text-sm font-medium text-gray-600">
+                                    <span className="text-red-500">*</span>자료
+                                </label>
+                                <input
+                                    name="materials"
+                                    type="file"
+                                    accept=".pdf,.pptx"
+                                    className="hidden"
+                                    id="materials-input"
+                                    required
+                                />
+                                <label htmlFor="materials-input" className="flex h-20 cursor-pointer flex-col items-center justify-center rounded-xl border border-gray-200 bg-white hover:bg-gray-50 transition-colors text-center">
+                                    <span className="text-xs text-gray-300">형식에 맞는 자료를<br/>업로드해주세요</span>
+                                </label>
+                            </div>
                         </div>
                     </div>
 
