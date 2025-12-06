@@ -80,6 +80,7 @@ export function ClassListClient({ classes }: ClassListClientProps) {
 
             setSelectedClass(null);
             setIsSuccessModalOpen(true);
+            toast.success("예약 신청이 완료되었습니다. 선생님의 승인을 기다려주세요.");
         } catch (error) {
             console.error("Failed to book class", error);
             toast.error("수업 예약에 실패했습니다");
@@ -413,16 +414,26 @@ export function ClassListClient({ classes }: ClassListClientProps) {
                         onClose={() => setIsSuccessModalOpen(false)}
                     >
                         <div className="flex flex-col items-center space-y-4 py-4">
-                            <h3 className="text-xl font-bold text-primary">예약 완료!</h3>
+                            <h3 className="text-xl font-bold text-primary">예약 신청 완료!</h3>
                             <p className="text-center text-gray-500">
-                                수업 예약이 완료되었습니다.<br />
-                                스케줄 페이지에서 확인해보세요.
+                                수업 예약 신청이 완료되었습니다.<br />
+                                선생님의 승인을 기다려주세요.<br />
+                                승인되면 스케줄 페이지에서 확인할 수 있습니다.
                             </p>
-                            <Link href="/schedule" className="w-full">
-                                <Button className="w-full bg-primary text-white hover:bg-primary/90">
-                                    스케줄 확인하기
+                            <div className="flex gap-3 w-full">
+                                <Button 
+                                    variant="outline" 
+                                    className="flex-1" 
+                                    onClick={() => setIsSuccessModalOpen(false)}
+                                >
+                                    닫기
                                 </Button>
-                            </Link>
+                                <Link href="/schedule" className="flex-1">
+                                    <Button className="w-full bg-primary text-white hover:bg-primary/90">
+                                        스케줄 확인하기
+                                    </Button>
+                                </Link>
+                            </div>
                         </div>
                     </Modal>
                 </div>

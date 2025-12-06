@@ -44,6 +44,9 @@ export async function GET(request: Request) {
       studentId: schedule.student_id,
       studentName: schedule.student?.name ?? "",
       studentEmail: schedule.student?.email ?? "",
+      contactInfo: schedule.contact_info,
+      zoomLink: schedule.zoom_link,
+      googleDocsLink: schedule.google_docs_link,
       class: schedule.class ? {
         id: schedule.class.id,
         title: schedule.class.title,
@@ -71,7 +74,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { classId, date, time, studentId } = body;
+    const { classId, date, time, studentId, contactInfo, forceCreate } = body;
 
     // Validate required fields
     if (!classId || !date || !time || !studentId) {
@@ -95,7 +98,25 @@ export async function POST(request: Request) {
       );
     }
 
-    // Insert new schedule
+    // Check for duplicate booking
+    const { data: existingSchedule } = await supabaseAdmin
+      .from('schedules')
+      .select('*')
+      .eq('class_id', classId)
+      .eq('student_id', studentId)
+      .eq('date', date)
+      .eq('time', time)
+      .in('status', ['pending', 'scheduled'])
+      .single();
+
+    if (existingSchedule && !forceCreate) {
+      return NextResponse.json(
+        { error: 'DUPLICATE_BOOKING', message: '이미 예약한 수업입니다' },
+        { status: 409 }
+      );
+    }
+
+    // Insert new schedule with 'pending' status (requires teacher approval)
     const { data: newSchedule, error } = await supabaseAdmin
       .from('schedules')
       .insert([
@@ -104,7 +125,8 @@ export async function POST(request: Request) {
           date,
           time,
           student_id: studentId,
-          status: 'scheduled',
+          contact_info: contactInfo,
+          status: 'pending',
         }
       ])
       .select(`
@@ -132,6 +154,9 @@ export async function POST(request: Request) {
       studentId: newSchedule.student_id,
       studentName: newSchedule.student?.name ?? "",
       studentEmail: newSchedule.student?.email ?? "",
+      contactInfo: newSchedule.contact_info,
+      zoomLink: newSchedule.zoom_link,
+      googleDocsLink: newSchedule.google_docs_link,
       class: {
         id: newSchedule.class.id,
         title: newSchedule.class.title,

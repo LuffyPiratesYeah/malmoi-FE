@@ -138,7 +138,23 @@ export function ScheduleClient({ schedules, isLoading }: ScheduleClientProps) {
                                                 <Image src="/watch.svg" alt="Time" width={20} height={20} className="text-gray-400" />
                                                 <span className="font-bold text-gray-900 text-lg">{schedule.time}</span>
                                             </div>
-                                            <Badge className="bg-green-50 text-green-600 border-none px-3 py-1">예약 완료</Badge>
+                                            <Badge className={`border-none px-3 py-1 ${
+                                                schedule.status === "pending" 
+                                                    ? "bg-yellow-50 text-yellow-600" 
+                                                    : schedule.status === "scheduled"
+                                                        ? "bg-blue-50 text-blue-600"
+                                                        : schedule.status === "completed"
+                                                            ? "bg-green-50 text-green-600"
+                                                            : "bg-gray-50 text-gray-600"
+                                            }`}>
+                                                {schedule.status === "pending" 
+                                                    ? "승인 대기" 
+                                                    : schedule.status === "scheduled"
+                                                        ? "예약 완료"
+                                                        : schedule.status === "completed"
+                                                            ? "수업 완료"
+                                                            : "취소됨"}
+                                            </Badge>
                                         </div>
 
                                         <div className="mb-6 flex items-center gap-4">
@@ -151,16 +167,53 @@ export function ScheduleClient({ schedules, isLoading }: ScheduleClientProps) {
                                             </div>
                                         </div>
 
-                                        <div className="mb-6 flex gap-3">
-                                            <Button className="flex-1 gap-2 bg-[#00C2FF] hover:bg-[#00C2FF]/90 text-white border-none h-12 font-bold">
-                                                <Image src="/video.svg" alt="Video" width={18} height={18} className="brightness-0 invert" />
-                                                Zoom 입장
-                                            </Button>
-                                            <Button variant="outline" className="flex-1 gap-2 h-12 font-bold text-gray-700 border-gray-200">
-                                                <Image src="/google_note.svg" alt="Note" width={18} height={18} />
-                                                수업 노트
-                                            </Button>
-                                        </div>
+                                        {schedule.status === "scheduled" && (
+                                            <div className="mb-6 flex gap-3">
+                                                {schedule.zoomLink ? (
+                                                    <Button
+                                                        className="flex-1 gap-2 bg-[#00C2FF] hover:bg-[#00C2FF]/90 text-white border-none h-12 font-bold"
+                                                        onClick={() => window.open(schedule.zoomLink, '_blank')}
+                                                    >
+                                                        <Image src="/video.svg" alt="Video" width={18} height={18} className="brightness-0 invert" />
+                                                        Zoom 입장
+                                                    </Button>
+                                                ) : (
+                                                    <Button
+                                                        className="flex-1 gap-2 bg-gray-300 text-gray-500 border-none h-12 font-bold cursor-not-allowed"
+                                                        disabled
+                                                    >
+                                                        <Image src="/video.svg" alt="Video" width={18} height={18} />
+                                                        링크 대기중
+                                                    </Button>
+                                                )}
+                                                {schedule.googleDocsLink ? (
+                                                    <Button
+                                                        variant="outline"
+                                                        className="flex-1 gap-2 h-12 font-bold text-gray-700 border-gray-200"
+                                                        onClick={() => window.open(schedule.googleDocsLink, '_blank')}
+                                                    >
+                                                        <Image src="/google_note.svg" alt="Note" width={18} height={18} />
+                                                        수업 노트
+                                                    </Button>
+                                                ) : (
+                                                    <Button
+                                                        variant="outline"
+                                                        className="flex-1 gap-2 h-12 font-bold text-gray-400 border-gray-200 cursor-not-allowed"
+                                                        disabled
+                                                    >
+                                                        <Image src="/google_note.svg" alt="Note" width={18} height={18} />
+                                                        노트 대기중
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        )}
+                                        {schedule.status === "pending" && (
+                                            <div className="mb-6 rounded-xl bg-yellow-50 border border-yellow-200 p-4">
+                                                <p className="text-sm text-yellow-800 font-medium">
+                                                    선생님의 승인을 기다리는 중입니다. 승인되면 알림을 드리겠습니다.
+                                                </p>
+                                            </div>
+                                        )}
 
                                         <div className="space-y-2 text-sm bg-gray-50 p-4 rounded-xl">
                                             <div className="flex">

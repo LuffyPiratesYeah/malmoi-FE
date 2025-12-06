@@ -85,7 +85,19 @@ export default function LoginPage() {
             }
         >
             <div className="mx-auto w-full max-w-md space-y-12">
-                <h2 className="text-center text-3xl font-normal text-gray-900">Login</h2>
+                <div className="flex items-center gap-4">
+                    <button
+                        onClick={() => router.back()}
+                        className="text-gray-500 hover:text-gray-700 transition-colors"
+                        aria-label="뒤로가기"
+                    >
+                        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        </svg>
+                    </button>
+                    <h2 className="flex-1 text-center text-3xl font-normal text-gray-900">Login</h2>
+                    <div className="w-6"></div>
+                </div>
 
                 <form onSubmit={handleSubmit} className="space-y-10">
                     <div className="space-y-8">

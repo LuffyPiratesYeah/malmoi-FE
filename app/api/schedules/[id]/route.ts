@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/server";
 
-const allowedStatuses = ["scheduled", "completed", "cancelled"] as const;
+const allowedStatuses = ["pending", "scheduled", "completed", "cancelled"] as const;
 type AllowedStatus = (typeof allowedStatuses)[number];
 
 type RawSchedule = {
@@ -11,6 +11,9 @@ type RawSchedule = {
   time: string;
   status: AllowedStatus;
   student_id: string;
+  contact_info?: string;
+  zoom_link?: string;
+  google_docs_link?: string;
   student?: { id: string; name: string; email: string } | null;
   class?: {
     id: string;
@@ -36,6 +39,9 @@ function transformSchedule(schedule: RawSchedule) {
     studentId: schedule.student_id,
     studentName: schedule.student?.name ?? "",
     studentEmail: schedule.student?.email ?? "",
+    contactInfo: schedule.contact_info,
+    zoomLink: schedule.zoom_link,
+    googleDocsLink: schedule.google_docs_link,
     class: schedule.class
       ? {
           id: schedule.class.id,
@@ -64,6 +70,8 @@ export async function PUT(
       status?: string;
       date?: string;
       time?: string;
+      zoom_link?: string;
+      google_docs_link?: string;
     } = {};
 
     if (body.status) {
@@ -78,6 +86,8 @@ export async function PUT(
 
     if (body.date) updates.date = body.date;
     if (body.time) updates.time = body.time;
+    if (body.zoomLink !== undefined) updates.zoom_link = body.zoomLink;
+    if (body.googleDocsLink !== undefined) updates.google_docs_link = body.googleDocsLink;
 
     if (Object.keys(updates).length === 0) {
       return NextResponse.json(

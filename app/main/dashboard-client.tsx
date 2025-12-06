@@ -34,7 +34,11 @@ export function DashboardClient({ schedules, isLoading }: DashboardClientProps) 
 
     const now = new Date();
     const today = now.toISOString().slice(0, 10);
-    const nextSchedule = sortedSchedules.find((s) => new Date(`${s.date}T${s.time}`) >= now) || sortedSchedules[0] || null;
+    // Find next confirmed schedule (scheduled or completed, not pending)
+    const nextSchedule = sortedSchedules.find((s) => 
+        (s.status === "scheduled" || s.status === "completed") && 
+        new Date(`${s.date}T${s.time}`) >= now
+    ) || sortedSchedules.find((s) => s.status === "scheduled" || s.status === "completed") || null;
     const todaySchedules = sortedSchedules.filter(s => s.date === today);
 
     // State for checkboxes
@@ -74,16 +78,18 @@ export function DashboardClient({ schedules, isLoading }: DashboardClientProps) 
                                         {formatDateLabel(nextSchedule.date)} {nextSchedule.time} 수업 예정
                                     </div>
 
-                                    <div className="flex gap-3">
-                                        <Button className="h-11 px-6 text-sm font-bold bg-[#13c0ff] hover:bg-[#13c0ff]/90 text-white shadow-md shadow-blue-200 border-none">
-                                            <Image src="/video.svg" alt="Video" width={18} height={18} className="mr-2 brightness-0 invert" />
-                                            Zoom으로 입장하기
-                                        </Button>
-                                        <Button variant="outline" className="h-11 px-6 text-sm font-bold rounded-full border-gray-200 text-gray-700 hover:bg-gray-50">
-                                            <Image src="/google_note.svg" alt="Note" width={18} height={18} className="mr-2" />
-                                            구글 문서 열기
-                                        </Button>
-                                    </div>
+                                    {nextSchedule.status === "scheduled" && (
+                                        <div className="flex gap-3">
+                                            <Button className="h-11 px-6 text-sm font-bold bg-[#13c0ff] hover:bg-[#13c0ff]/90 text-white shadow-md shadow-blue-200 border-none">
+                                                <Image src="/video.svg" alt="Video" width={18} height={18} className="mr-2 brightness-0 invert" />
+                                                Zoom으로 입장하기
+                                            </Button>
+                                            <Button variant="outline" className="h-11 px-6 text-sm font-bold rounded-full border-gray-200 text-gray-700 hover:bg-gray-50">
+                                                <Image src="/google_note.svg" alt="Note" width={18} height={18} className="mr-2" />
+                                                구글 문서 열기
+                                            </Button>
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="flex items-start gap-6 mb-8">
@@ -166,16 +172,29 @@ export function DashboardClient({ schedules, isLoading }: DashboardClientProps) 
                                                         <span className="font-bold text-gray-900 text-sm">{item.time.split('-')[0]}</span>
                                                         <div className="flex items-center gap-2">
                                                             <span className="text-xs text-gray-600">{item.class?.tutorName || "튜터"} 선생님</span>
+                                                            <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                                                                item.status === "pending"
+                                                                    ? "bg-yellow-50 text-yellow-700"
+                                                                    : item.status === "scheduled"
+                                                                        ? "bg-blue-50 text-blue-700"
+                                                                        : item.status === "completed"
+                                                                            ? "bg-green-50 text-green-700"
+                                                                            : "bg-gray-50 text-gray-700"
+                                                            }`}>
+                                                                {item.status === "pending" ? "대기" : item.status === "scheduled" ? "예약" : item.status === "completed" ? "완료" : "취소"}
+                                                            </span>
                                                         </div>
                                                     </div>
-                                                    <div className="flex gap-2 text-gray-400">
-                                                        <div className="cursor-pointer transition-opacity hover:opacity-80">
-                                                            <Image src="/video.svg" alt="Video" width={18} height={18} />
+                                                    {item.status === "scheduled" && (
+                                                        <div className="flex gap-2 text-gray-400">
+                                                            <div className="cursor-pointer transition-opacity hover:opacity-80">
+                                                                <Image src="/video.svg" alt="Video" width={18} height={18} />
+                                                            </div>
+                                                            <div className="cursor-pointer transition-opacity hover:opacity-80">
+                                                                <Image src="/google_note.svg" alt="Note" width={18} height={18} />
+                                                            </div>
                                                         </div>
-                                                        <div className="cursor-pointer transition-opacity hover:opacity-80">
-                                                            <Image src="/google_note.svg" alt="Note" width={18} height={18} />
-                                                        </div>
-                                                    </div>
+                                                    )}
                                                 </div>
                                             ))}
                                         </div>

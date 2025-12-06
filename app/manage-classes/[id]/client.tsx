@@ -28,6 +28,8 @@ interface TeacherTask {
 export function ManageClassDetailClient({ classData }: ManageClassDetailClientProps) {
     const [activeTab, setActiveTab] = useState<Tab>("schedule");
     const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+    const [isLinksModalOpen, setIsLinksModalOpen] = useState(false);
+    const [selectedSchedule, setSelectedSchedule] = useState<ScheduleItem | null>(null);
     const [schedules, setSchedules] = useState<ScheduleItem[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const user = useAuthStore((state) => state.user);
@@ -37,6 +39,11 @@ export function ManageClassDetailClient({ classData }: ManageClassDetailClientPr
         date: "",
         time: "",
         studentId: "",
+    });
+
+    const [linksForm, setLinksForm] = useState({
+        zoomLink: "",
+        googleDocsLink: "",
     });
 
     const [tasks, setTasks] = useState<TeacherTask[]>([]);
@@ -95,6 +102,7 @@ export function ManageClassDetailClient({ classData }: ManageClassDetailClientPr
     const summary = useMemo(() => {
         return {
             total: schedules.length,
+            pending: schedules.filter((s) => s.status === "pending").length,
             scheduled: schedules.filter((s) => s.status === "scheduled").length,
             completed: schedules.filter((s) => s.status === "completed").length,
             cancelled: schedules.filter((s) => s.status === "cancelled").length,
@@ -167,6 +175,40 @@ export function ManageClassDetailClient({ classData }: ManageClassDetailClientPr
         } catch (error) {
             console.error("Failed to delete schedule", error);
             toast.error("삭제 실패");
+        }
+    };
+
+    const openLinksModal = (schedule: ScheduleItem) => {
+        setSelectedSchedule(schedule);
+        setLinksForm({
+            zoomLink: schedule.zoomLink || "",
+            googleDocsLink: schedule.googleDocsLink || "",
+        });
+        setIsLinksModalOpen(true);
+    };
+
+    const updateLinks = async () => {
+        if (!selectedSchedule) return;
+
+        setIsSubmitting(true);
+        try {
+            const res = await fetch(`/api/schedules/${selectedSchedule.id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    zoomLink: linksForm.zoomLink || null,
+                    googleDocsLink: linksForm.googleDocsLink || null,
+                }),
+            });
+            if (!res.ok) throw new Error(await res.text());
+            toast.success("링크가 업데이트되었습니다");
+            setIsLinksModalOpen(false);
+            await loadSchedules();
+        } catch (error) {
+            console.error("Failed to update links", error);
+            toast.error("링크 업데이트 실패");
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -318,6 +360,7 @@ export function ManageClassDetailClient({ classData }: ManageClassDetailClientPr
                             <p className="text-sm text-gray-500">학생들의 예약을 확인하고 상태를 업데이트하세요.</p>
                         </div>
                         <div className="flex items-center gap-3 text-sm text-gray-600">
+                            <span className="rounded-full bg-yellow-50 px-3 py-1 font-bold text-yellow-700">대기 {summary.pending}</span>
                             <span className="rounded-full bg-blue-50 px-3 py-1 font-bold text-blue-700">예약 {summary.scheduled}</span>
                             <span className="rounded-full bg-green-50 px-3 py-1 font-bold text-green-700">완료 {summary.completed}</span>
                             <span className="rounded-full bg-gray-100 px-3 py-1 font-bold text-gray-700">취소 {summary.cancelled}</span>
@@ -342,22 +385,54 @@ export function ManageClassDetailClient({ classData }: ManageClassDetailClientPr
                                         </span>
                                         <span className="font-bold text-gray-900">{schedule.time}</span>
                                         <span className="text-sm text-gray-700">{schedule.studentName || "이름 없음"}</span>
-                                        <span className={`px-2 py-1 rounded text-xs font-medium ${schedule.status === "scheduled"
-                                                ? "bg-blue-50 text-blue-700"
-                                                : schedule.status === "completed"
-                                                        ? "bg-green-50 text-green-700"
-                                                        : "bg-gray-50 text-gray-700"
+                                        <span className={`px-2 py-1 rounded text-xs font-medium ${schedule.status === "pending"
+                                                ? "bg-yellow-50 text-yellow-700"
+                                                : schedule.status === "scheduled"
+                                                        ? "bg-blue-50 text-blue-700"
+                                                        : schedule.status === "completed"
+                                                                ? "bg-green-50 text-green-700"
+                                                                : "bg-gray-50 text-gray-700"
                                             }`}>
-                                            {schedule.status === "scheduled" ? "예약" : schedule.status === "completed" ? "완료" : "취소"}
+                                            {schedule.status === "pending" ? "대기" : schedule.status === "scheduled" ? "예약" : schedule.status === "completed" ? "완료" : "취소"}
                                         </span>
                                     </div>
                                     <div className="flex flex-wrap gap-2">
-                                        {schedule.status !== "completed" && (
-                                            <Button variant="outline" size="sm" onClick={() => updateScheduleStatus(schedule.id, "completed")}>
-                                                완료 처리
-                                            </Button>
+                                        {schedule.status === "pending" && (
+                                            <>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-200"
+                                                    onClick={() => updateScheduleStatus(schedule.id, "scheduled")}
+                                                >
+                                                    승인
+                                                </Button>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="text-red-600 hover:bg-red-50"
+                                                    onClick={() => updateScheduleStatus(schedule.id, "cancelled")}
+                                                >
+                                                    거부
+                                                </Button>
+                                            </>
                                         )}
-                                        {schedule.status !== "cancelled" && (
+                                        {schedule.status === "scheduled" && (
+                                            <>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="bg-cyan-50 text-cyan-700 hover:bg-cyan-100 border-cyan-200"
+                                                    onClick={() => openLinksModal(schedule)}
+                                                >
+                                                    🔗 링크 설정
+                                                </Button>
+                                                <Button variant="outline" size="sm" onClick={() => updateScheduleStatus(schedule.id, "completed")}>
+                                                    완료 처리
+                                                </Button>
+                                            </>
+                                        )}
+                                        {schedule.status !== "cancelled" && schedule.status !== "pending" && (
                                             <Button variant="outline" size="sm" className="text-red-600 hover:bg-red-50" onClick={() => updateScheduleStatus(schedule.id, "cancelled")}>
                                                 취소
                                             </Button>
@@ -400,6 +475,9 @@ export function ManageClassDetailClient({ classData }: ManageClassDetailClientPr
                                                 <div className="text-sm text-gray-500">{member.email || "이메일 없음"}</div>
                                             </div>
                                             <div className="flex items-center gap-2 text-xs">
+                                                <span className="rounded-full bg-yellow-50 px-2 py-1 font-bold text-yellow-700">
+                                                    대기 {member.bookings.filter((b) => b.status === "pending").length}
+                                                </span>
                                                 <span className="rounded-full bg-blue-50 px-2 py-1 font-bold text-blue-700">
                                                     예약 {member.bookings.filter((b) => b.status === "scheduled").length}
                                                 </span>
@@ -414,7 +492,7 @@ export function ManageClassDetailClient({ classData }: ManageClassDetailClientPr
                                         <div className="flex flex-wrap gap-2 text-xs text-gray-600">
                                             {member.bookings.map((b) => (
                                                 <span key={b.id} className="rounded bg-gray-100 px-2 py-1">
-                                                    {b.date} {b.time} ({b.status === "scheduled" ? "예약" : b.status === "completed" ? "완료" : "취소"})
+                                                    {b.date} {b.time} ({b.status === "pending" ? "대기" : b.status === "scheduled" ? "예약" : b.status === "completed" ? "완료" : "취소"})
                                                 </span>
                                             ))}
                                         </div>
@@ -544,6 +622,63 @@ export function ManageClassDetailClient({ classData }: ManageClassDetailClientPr
                             disabled={isSubmitting || members.length === 0}
                         >
                             {isSubmitting ? "추가 중..." : "추가하기"}
+                        </Button>
+                    </div>
+                </div>
+            </Modal>
+
+            {/* Links Setup Modal */}
+            <Modal
+                isOpen={isLinksModalOpen}
+                onClose={() => setIsLinksModalOpen(false)}
+                title="Zoom 및 Google Docs 링크 설정"
+            >
+                <div className="space-y-6">
+                    {selectedSchedule && (
+                        <div className="bg-blue-50 rounded-lg p-4">
+                            <p className="text-sm text-gray-700">
+                                <span className="font-bold">{selectedSchedule.studentName}</span> 학생의{" "}
+                                <span className="font-bold">{selectedSchedule.date} {selectedSchedule.time}</span> 수업
+                            </p>
+                        </div>
+                    )}
+
+                    <Input
+                        label="Zoom 링크"
+                        type="url"
+                        placeholder="https://zoom.us/j/..."
+                        value={linksForm.zoomLink}
+                        onChange={(e) => setLinksForm({ ...linksForm, zoomLink: e.target.value })}
+                    />
+
+                    <Input
+                        label="Google Docs 링크"
+                        type="url"
+                        placeholder="https://docs.google.com/document/d/..."
+                        value={linksForm.googleDocsLink}
+                        onChange={(e) => setLinksForm({ ...linksForm, googleDocsLink: e.target.value })}
+                    />
+
+                    <div className="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
+                        <p className="text-sm text-yellow-800">
+                            💡 <span className="font-bold">팁:</span> 링크를 설정하면 학생이 스케줄 페이지에서 바로 접속할 수 있습니다.
+                        </p>
+                    </div>
+
+                    <div className="flex gap-3 pt-4">
+                        <Button
+                            variant="outline"
+                            className="flex-1"
+                            onClick={() => setIsLinksModalOpen(false)}
+                        >
+                            취소
+                        </Button>
+                        <Button
+                            className="flex-1 bg-primary text-white hover:bg-primary/90"
+                            onClick={updateLinks}
+                            disabled={isSubmitting}
+                        >
+                            {isSubmitting ? "저장 중..." : "저장하기"}
                         </Button>
                     </div>
                 </div>

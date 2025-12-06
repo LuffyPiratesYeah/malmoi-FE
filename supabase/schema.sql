@@ -51,8 +51,11 @@ CREATE TABLE IF NOT EXISTS schedules (
   class_id UUID NOT NULL REFERENCES classes(id) ON DELETE CASCADE,
   date DATE NOT NULL,
   time TEXT NOT NULL,
-  status TEXT NOT NULL DEFAULT 'scheduled' CHECK (status IN ('scheduled', 'completed', 'cancelled')),
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'scheduled', 'completed', 'cancelled')),
   student_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  contact_info TEXT,
+  zoom_link TEXT,
+  google_docs_link TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
