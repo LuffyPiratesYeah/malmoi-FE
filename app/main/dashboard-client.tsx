@@ -80,14 +80,42 @@ export function DashboardClient({ schedules, isLoading }: DashboardClientProps) 
 
                                     {nextSchedule.status === "scheduled" && (
                                         <div className="flex gap-3">
-                                            <Button className="h-11 px-6 text-sm font-bold bg-[#13c0ff] hover:bg-[#13c0ff]/90 text-white shadow-md shadow-blue-200 border-none">
-                                                <Image src="/video.svg" alt="Video" width={18} height={18} className="mr-2 brightness-0 invert" />
-                                                Zoom으로 입장하기
-                                            </Button>
-                                            <Button variant="outline" className="h-11 px-6 text-sm font-bold rounded-full border-gray-200 text-gray-700 hover:bg-gray-50">
-                                                <Image src="/google_note.svg" alt="Note" width={18} height={18} className="mr-2" />
-                                                구글 문서 열기
-                                            </Button>
+                                            {nextSchedule.zoomLink ? (
+                                                <Button
+                                                    className="h-11 px-6 text-sm font-bold bg-[#13c0ff] hover:bg-[#13c0ff]/90 text-white shadow-md shadow-blue-200 border-none"
+                                                    onClick={() => window.open(nextSchedule.zoomLink, '_blank')}
+                                                >
+                                                    <Image src="/video.svg" alt="Video" width={18} height={18} className="mr-2 brightness-0 invert" />
+                                                    Zoom으로 입장하기
+                                                </Button>
+                                            ) : (
+                                                <Button
+                                                    className="h-11 px-6 text-sm font-bold bg-gray-300 text-gray-500 border-none cursor-not-allowed"
+                                                    disabled
+                                                >
+                                                    <Image src="/video.svg" alt="Video" width={18} height={18} className="mr-2" />
+                                                    링크 대기중
+                                                </Button>
+                                            )}
+                                            {nextSchedule.googleDocsLink ? (
+                                                <Button
+                                                    variant="outline"
+                                                    className="h-11 px-6 text-sm font-bold rounded-full border-gray-200 text-gray-700 hover:bg-gray-50"
+                                                    onClick={() => window.open(nextSchedule.googleDocsLink, '_blank')}
+                                                >
+                                                    <Image src="/google_note.svg" alt="Note" width={18} height={18} className="mr-2" />
+                                                    구글 문서 열기
+                                                </Button>
+                                            ) : (
+                                                <Button
+                                                    variant="outline"
+                                                    className="h-11 px-6 text-sm font-bold rounded-full border-gray-200 text-gray-400 cursor-not-allowed"
+                                                    disabled
+                                                >
+                                                    <Image src="/google_note.svg" alt="Note" width={18} height={18} className="mr-2" />
+                                                    노트 대기중
+                                                </Button>
+                                            )}
                                         </div>
                                     )}
                                 </div>
@@ -186,13 +214,31 @@ export function DashboardClient({ schedules, isLoading }: DashboardClientProps) 
                                                         </div>
                                                     </div>
                                                     {item.status === "scheduled" && (
-                                                        <div className="flex gap-2 text-gray-400">
-                                                            <div className="cursor-pointer transition-opacity hover:opacity-80">
-                                                                <Image src="/video.svg" alt="Video" width={18} height={18} />
-                                                            </div>
-                                                            <div className="cursor-pointer transition-opacity hover:opacity-80">
-                                                                <Image src="/google_note.svg" alt="Note" width={18} height={18} />
-                                                            </div>
+                                                        <div className="flex gap-2">
+                                                            {item.zoomLink ? (
+                                                                <div
+                                                                    className="cursor-pointer transition-opacity hover:opacity-80 text-gray-700"
+                                                                    onClick={() => window.open(item.zoomLink, '_blank')}
+                                                                >
+                                                                    <Image src="/video.svg" alt="Video" width={18} height={18} />
+                                                                </div>
+                                                            ) : (
+                                                                <div className="cursor-not-allowed text-gray-300">
+                                                                    <Image src="/video.svg" alt="Video" width={18} height={18} />
+                                                                </div>
+                                                            )}
+                                                            {item.googleDocsLink ? (
+                                                                <div
+                                                                    className="cursor-pointer transition-opacity hover:opacity-80 text-gray-700"
+                                                                    onClick={() => window.open(item.googleDocsLink, '_blank')}
+                                                                >
+                                                                    <Image src="/google_note.svg" alt="Note" width={18} height={18} />
+                                                                </div>
+                                                            ) : (
+                                                                <div className="cursor-not-allowed text-gray-300">
+                                                                    <Image src="/google_note.svg" alt="Note" width={18} height={18} />
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     )}
                                                 </div>
