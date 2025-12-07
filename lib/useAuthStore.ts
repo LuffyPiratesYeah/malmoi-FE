@@ -5,7 +5,7 @@ interface AuthUser {
     id: string;
     email?: string;
     name: string;
-    userType: "student" | "teacher";
+    userType: "student" | "teacher" | "admin";
     isTeacher: boolean;
     profileImage?: string | null;
     verificationStatus?: "none" | "pending" | "verified";
