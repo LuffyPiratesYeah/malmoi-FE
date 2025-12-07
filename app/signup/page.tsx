@@ -201,7 +201,7 @@ export default function SignupPage() {
                                 value={verificationCode}
                                 onChange={(e) => setVerificationCode(e.target.value)}
                             />
-                            <p className="text-xs text-gray-500">현재 테스트용 인증코드는 1234입니다.</p>
+
                         </div>
                         <Input
                             name="password"

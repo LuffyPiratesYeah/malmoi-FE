@@ -1,52 +1,10 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import bcrypt from "bcryptjs";
+import nodemailer from "nodemailer";
 
 const CODE_EXPIRY_MINUTES = 10;
 const RESEND_COOLDOWN_SECONDS = 60;
-const FIXED_CODE = "1234";
-
-async function sendEmailIfConfigured(email: string, code: string) {
-  const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.RESEND_FROM_EMAIL;
-
-  // If email provider isn't configured, log the code for local testing
-  if (!apiKey || !from) {
-    console.info(`[email dev] Verification code for ${email}: ${code}`);
-    return;
-  }
-
-  try {
-    const response = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        from,
-        to: [email],
-        subject: "말모이 이메일 인증코드",
-        text: [
-          "안녕하세요!",
-          "",
-          "말모이 가입을 위해 아래 인증코드를 입력해주세요.",
-          "",
-          `인증코드: ${code}`,
-          "",
-          `본 코드는 ${CODE_EXPIRY_MINUTES}분 후 만료됩니다.`,
-        ].join("\n"),
-      }),
-    });
-
-    if (!response.ok) {
-      const body = await response.text();
-      console.error("Failed to send verification email:", body);
-    }
-  } catch (error) {
-    console.error("Email send error:", error);
-  }
-}
 
 export async function POST(request: Request) {
   try {
@@ -109,10 +67,12 @@ export async function POST(request: Request) {
       }
     }
 
-    const code = FIXED_CODE;
+    // Generate random 6-digit code
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
     const codeHash = await bcrypt.hash(code, 10);
     const expiresAt = new Date(now.getTime() + CODE_EXPIRY_MINUTES * 60 * 1000).toISOString();
 
+    // Save to database
     const { error: insertError } = await supabaseAdmin
       .from("email_verification_codes")
       .insert({
@@ -130,14 +90,89 @@ export async function POST(request: Request) {
       );
     }
 
-    // 이메일 발송은 추후 적용 예정. 현재는 코드만 반환합니다.
+    // Send email using Nodemailer
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: normalizedEmail,
+      subject: "[말모이] 이메일 인증코드",
+      html: `
+        <!DOCTYPE html>
+        <html lang="ko">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>말모이 이메일 인증</title>
+        </head>
+        <body style="margin: 0; padding: 0; font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f3f4f6;">
+          <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; margin-top: 40px; margin-bottom: 40px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);">
+            
+            <!-- Header -->
+            <tr>
+              <td style="padding: 40px 40px 20px 40px; text-align: center; background-color: #ffffff;">
+                <img src="cid:logo" alt="Malmoi" style="width: 120px; height: auto;" />
+              </td>
+            </tr>
+
+            <!-- Content -->
+            <tr>
+              <td style="padding: 20px 40px 40px 40px; text-align: center;">
+                <h2 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 700; color: #111827;">이메일 인증 코드</h2>
+                <p style="margin: 0 0 32px 0; font-size: 16px; line-height: 1.6; color: #4B5563;">
+                  안녕하세요!<br>
+                  말모이 서비스를 이용해 주셔서 감사합니다.<br>
+                  아래 인증 코드를 입력하여 회원가입을 완료해 주세요.
+                </p>
+
+                <!-- Code Box -->
+                <div style="background-color: #F3F4F6; border-radius: 12px; padding: 24px; margin-bottom: 32px;">
+                  <span style="font-size: 32px; font-weight: 800; letter-spacing: 8px; color: #00C2FF; display: block;">${code}</span>
+                </div>
+
+                <p style="margin: 0; font-size: 14px; color: #6B7280;">
+                  인증 코드는 <strong style="color: #EF4444;">${CODE_EXPIRY_MINUTES}분</strong> 후 만료됩니다.<br>
+                  본인이 요청하지 않았다면 이 메일을 무시하셔도 됩니다.
+                </p>
+              </td>
+            </tr>
+
+            <!-- Footer -->
+            <tr>
+              <td style="padding: 32px 40px; background-color: #F9FAFB; text-align: center; border-top: 1px solid #E5E7EB;">
+                <p style="margin: 0; font-size: 12px; color: #9CA3AF; line-height: 1.5;">
+                  © 2025 Malmoi. All rights reserved.<br>
+                  본 메일은 발신 전용이며 회신되지 않습니다.
+                </p>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
+      `,
+      attachments: [
+        {
+          filename: 'logo.png',
+          path: process.cwd() + '/public/logo.png',
+          cid: 'logo' // same cid value as in the html img src
+        }
+      ]
+    };
+
+    await transporter.sendMail(mailOptions);
 
     return NextResponse.json({
-      message: "인증 코드가 발송되었습니다. (현재 테스트용 코드 1234)",
+      message: "인증 코드가 발송되었습니다.",
       expiresIn: CODE_EXPIRY_MINUTES * 60,
       cooldown: RESEND_COOLDOWN_SECONDS,
-      code,
     });
+
   } catch (error) {
     console.error("Send verification code error:", error);
     return NextResponse.json(
