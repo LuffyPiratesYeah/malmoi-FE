@@ -80,6 +80,92 @@ export async function PUT(
       );
     }
 
+    // Send email notification if verification is approved
+    if (body.verificationStatus === 'verified' && updatedUser.email) {
+      try {
+        const nodemailer = await import("nodemailer");
+        const transporter = nodemailer.createTransport({
+          service: "gmail",
+          auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS,
+          },
+        });
+
+        const mailOptions = {
+          from: process.env.EMAIL_USER,
+          to: updatedUser.email,
+          subject: "[말모이] 튜터 인증이 승인되었습니다! 🎉",
+          html: `
+            <!DOCTYPE html>
+            <html lang="ko">
+            <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>말모이 튜터 인증 승인</title>
+            </head>
+            <body style="margin: 0; padding: 0; font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f3f4f6;">
+              <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; margin-top: 40px; margin-bottom: 40px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);">
+                
+                <!-- Header -->
+                <tr>
+                  <td style="padding: 40px 40px 20px 40px; text-align: center; background-color: #ffffff;">
+                    <img src="cid:logo" alt="Malmoi" style="width: 120px; height: auto;" />
+                  </td>
+                </tr>
+
+                <!-- Content -->
+                <tr>
+                  <td style="padding: 20px 40px 40px 40px; text-align: center;">
+                    <h2 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 700; color: #111827;">튜터 인증이 승인되었습니다!</h2>
+                    <p style="margin: 0 0 32px 0; font-size: 16px; line-height: 1.6; color: #4B5563;">
+                      안녕하세요, ${updatedUser.name} 선생님!<br>
+                      말모이 튜터 인증이 성공적으로 완료되었습니다.<br>
+                      이제 수업을 개설하고 학생들을 만나보세요!
+                    </p>
+
+                    <!-- Action Button -->
+                    <div style="margin-bottom: 32px;">
+                      <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/manage-classes" style="display: inline-block; background-color: #00C2FF; color: white; padding: 16px 32px; border-radius: 12px; text-decoration: none; font-weight: 700; font-size: 16px;">수업 관리하러 가기</a>
+                    </div>
+
+                    <p style="margin: 0; font-size: 14px; color: #6B7280;">
+                      멋진 수업을 기대하겠습니다.<br>
+                      문의사항이 있으시면 언제든 연락주세요.
+                    </p>
+                  </td>
+                </tr>
+
+                <!-- Footer -->
+                <tr>
+                  <td style="padding: 32px 40px; background-color: #F9FAFB; text-align: center; border-top: 1px solid #E5E7EB;">
+                    <p style="margin: 0; font-size: 12px; color: #9CA3AF; line-height: 1.5;">
+                      © 2025 Malmoi. All rights reserved.<br>
+                      본 메일은 발신 전용이며 회신되지 않습니다.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </body>
+            </html>
+          `,
+          attachments: [
+            {
+              filename: 'logo.png',
+              path: process.cwd() + '/public/logo.png',
+              cid: 'logo'
+            }
+          ]
+        };
+
+        await transporter.sendMail(mailOptions);
+        console.log(`Approval email sent to ${updatedUser.email}`);
+      } catch (emailError) {
+        console.error('Failed to send approval email:', emailError);
+        // Don't fail the request if email fails, just log it
+      }
+    }
+
     // Transform to camelCase
     const transformedUser = {
       id: updatedUser.id,
