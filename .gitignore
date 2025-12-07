@@ -23,6 +23,10 @@
 
 # misc
 .DS_Store
+.claude
+.codex
+.serena
+.wrangler
 *.pem
 
 # debug
@@ -33,6 +37,19 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+
+# MCP configuration (contains access tokens)
+mcp.json
+.vscode/mcp.json
+
+# Credentials and secrets
+credentials.json
+secrets.json
+*secret*
+*.key
+*.keystore
+*.p12
+*.pfx
 
 # vercel
 .vercel

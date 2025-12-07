@@ -1,5 +1,4 @@
 import { Navbar } from "@/components/layout/Navbar";
-import { db } from "@/lib/db";
 import { ProfileClient } from "./client";
 
 export default async function ProfilePage() {

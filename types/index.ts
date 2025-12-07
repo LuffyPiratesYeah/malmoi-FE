@@ -26,7 +26,12 @@ export interface ScheduleItem {
     classId: string;
     date: string;
     time: string;
-    status: "scheduled" | "completed" | "cancelled";
+    status: "pending" | "scheduled" | "completed" | "cancelled";
     studentId: string;
+    studentName?: string;
+    studentEmail?: string;
+    contactInfo?: string;
+    zoomLink?: string;
+    googleDocsLink?: string;
     class: ClassItem;
 }
