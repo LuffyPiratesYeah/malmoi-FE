@@ -118,11 +118,18 @@ export async function PUT(
                 <tr>
                   <td style="padding: 20px 40px 40px 40px; text-align: center;">
                     <h2 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 700; color: #111827;">튜터 인증이 승인되었습니다!</h2>
-                    <p style="margin: 0 0 32px 0; font-size: 16px; line-height: 1.6; color: #4B5563;">
+                    <p style="margin: 0 0 24px 0; font-size: 16px; line-height: 1.6; color: #4B5563;">
                       안녕하세요, ${updatedUser.name} 선생님!<br>
                       말모이 튜터 인증이 성공적으로 완료되었습니다.<br>
                       이제 수업을 개설하고 학생들을 만나보세요!
                     </p>
+
+                    <!-- Important Notice -->
+                    <div style="background-color: #FFF7ED; border: 1px solid #FFEDD5; border-radius: 8px; padding: 16px; margin-bottom: 32px; text-align: left;">
+                      <p style="margin: 0; font-size: 14px; color: #9A3412; font-weight: 600; text-align: center;">
+                        ⚠️ 권한 적용을 위해 반드시 로그아웃 후 다시 로그인해주세요.
+                      </p>
+                    </div>
 
                     <!-- Action Button -->
                     <div style="margin-bottom: 32px;">
