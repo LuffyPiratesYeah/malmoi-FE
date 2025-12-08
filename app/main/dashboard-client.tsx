@@ -7,6 +7,10 @@ import Image from "next/image";
 import { useMemo, useState } from "react";
 import { ScheduleItem } from "@/types";
 import { cn } from "@/lib/utils";
+import { useBookingStore } from "@/lib/useBookingStore";
+import { Modal } from "@/components/ui/Modal";
+import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 
 interface DashboardClientProps {
     schedules: ScheduleItem[];
@@ -35,8 +39,8 @@ export function DashboardClient({ schedules, isLoading }: DashboardClientProps) 
     const now = new Date();
     const today = now.toISOString().slice(0, 10);
     // Find next confirmed schedule (scheduled or completed, not pending)
-    const nextSchedule = sortedSchedules.find((s) => 
-        (s.status === "scheduled" || s.status === "completed") && 
+    const nextSchedule = sortedSchedules.find((s) =>
+        (s.status === "scheduled" || s.status === "completed") &&
         new Date(`${s.date}T${s.time}`) >= now
     ) || sortedSchedules.find((s) => s.status === "scheduled" || s.status === "completed") || null;
     const todaySchedules = sortedSchedules.filter(s => s.date === today);
@@ -46,7 +50,29 @@ export function DashboardClient({ schedules, isLoading }: DashboardClientProps) 
     const [todoChecks, setTodoChecks] = useState<boolean[]>([false, false, false, false]);
 
     // State for Quick Reserve
-    const [selectedTime, setSelectedTime] = useState<string | null>(null);
+    const { quickTimes, activeQuickTimeId, setActiveQuickTime, addQuickTime, removeQuickTime } = useBookingStore();
+    const [isQuickTimeModalOpen, setIsQuickTimeModalOpen] = useState(false);
+    const [quickTimeForm, setQuickTimeForm] = useState({ label: "", time: "" });
+    const router = useRouter();
+
+    const handleAddQuickTime = () => {
+        if (!quickTimeForm.label || !quickTimeForm.time) {
+            toast.error("모든 필드를 입력해주세요");
+            return;
+        }
+        addQuickTime(quickTimeForm);
+        setQuickTimeForm({ label: "", time: "" });
+        setIsQuickTimeModalOpen(false);
+        toast.success("빠른 예약 시간이 추가되었습니다");
+    };
+
+    const handleBookWithQuickTime = () => {
+        if (!activeQuickTimeId) {
+            toast.error("시간을 선택해주세요");
+            return;
+        }
+        router.push("/class?quick=true");
+    };
 
     const togglePrep = (index: number) => {
         const newChecks = [...prepChecks];
@@ -200,15 +226,14 @@ export function DashboardClient({ schedules, isLoading }: DashboardClientProps) 
                                                         <span className="font-bold text-gray-900 text-sm">{item.time.split('-')[0]}</span>
                                                         <div className="flex items-center gap-2">
                                                             <span className="text-xs text-gray-600">{item.class?.tutorName || "튜터"} 선생님</span>
-                                                            <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                                                                item.status === "pending"
-                                                                    ? "bg-yellow-50 text-yellow-700"
-                                                                    : item.status === "scheduled"
-                                                                        ? "bg-blue-50 text-blue-700"
-                                                                        : item.status === "completed"
-                                                                            ? "bg-green-50 text-green-700"
-                                                                            : "bg-gray-50 text-gray-700"
-                                                            }`}>
+                                                            <span className={`px-2 py-0.5 rounded text-xs font-medium ${item.status === "pending"
+                                                                ? "bg-yellow-50 text-yellow-700"
+                                                                : item.status === "scheduled"
+                                                                    ? "bg-blue-50 text-blue-700"
+                                                                    : item.status === "completed"
+                                                                        ? "bg-green-50 text-green-700"
+                                                                        : "bg-gray-50 text-gray-700"
+                                                                }`}>
                                                                 {item.status === "pending" ? "대기" : item.status === "scheduled" ? "예약" : item.status === "completed" ? "완료" : "취소"}
                                                             </span>
                                                         </div>
@@ -298,43 +323,105 @@ export function DashboardClient({ schedules, isLoading }: DashboardClientProps) 
 
                     {/* Quick Reserve */}
                     <Card title="빠른 수업 예약" subtitle="원하는 시간에 1:1 수업을 빠르게 예약해보세요." className="border border-[#ced4da] shadow-sm">
-                        <div className="mb-6 flex items-center gap-2 text-sm font-bold text-gray-900">
-                            <Image src="/watch.svg" alt="Calendar" width={20} height={20} className="text-primary" />
-                            오늘 · {formatDateLabel(today)}
+                        <div className="mb-4 flex items-center justify-between">
+                            <div className="flex items-center gap-2 text-sm font-bold text-gray-900">
+                                <Image src="/watch.svg" alt="Calendar" width={20} height={20} className="text-primary" />
+                                오늘 · {formatDateLabel(today)}
+                            </div>
+                            <button
+                                onClick={() => setIsQuickTimeModalOpen(true)}
+                                className="text-xs text-primary hover:underline flex items-center gap-1"
+                            >
+                                <p>+</p> 추가
+                            </button>
                         </div>
 
-                        <div className="space-y-3">
-                            {[
-                                { id: '1', label: '오늘 19:00' },
-                                { id: '2', label: '오늘 21:00' },
-                                { id: '3', label: '내일 20:00' }
-                            ].map((time) => (
-                                <button
-                                    key={time.id}
-                                    onClick={() => setSelectedTime(time.id)}
-                                    className={cn(
-                                        "flex w-full items-center justify-between rounded-xl border px-4 py-3 text-sm font-bold transition-colors",
-                                        selectedTime === time.id
-                                            ? "border-primary bg-blue-50 text-primary"
-                                            : "border-gray-200 text-gray-800 hover:border-primary/50"
-                                    )}
-                                >
-                                    <span>{time.label}</span>
-                                    {selectedTime === time.id && (
-                                        <svg className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                        </svg>
-                                    )}
-                                </button>
-                            ))}
+                        <div className="space-y-3 max-h-[240px] overflow-y-auto pr-1 custom-scrollbar">
+                            {quickTimes.length === 0 ? (
+                                <p className="text-sm text-gray-500 text-center py-4">등록된 빠른 예약 시간이 없습니다.</p>
+                            ) : (
+                                quickTimes.map((qt) => (
+                                    <div
+                                        key={qt.id}
+                                        onClick={() => setActiveQuickTime(activeQuickTimeId === qt.id ? null : qt.id)}
+                                        className={cn(
+                                            "group relative flex w-full items-center justify-between rounded-xl border px-4 py-3 text-sm font-bold transition-colors cursor-pointer shrink-0",
+                                            activeQuickTimeId === qt.id
+                                                ? "border-primary bg-blue-50 text-primary"
+                                                : "border-gray-200 text-gray-800 hover:border-primary/50"
+                                        )}
+                                    >
+                                        <div className="flex flex-col items-start">
+                                            <span>{qt.label}</span>
+                                            <span className="text-xs font-normal opacity-80">{qt.time}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            {activeQuickTimeId === qt.id && (
+                                                <svg className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                </svg>
+                                            )}
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    removeQuickTime(qt.id);
+                                                }}
+                                                className="opacity-0 group-hover:opacity-100 p-1 hover:text-red-500 transition-opacity"
+                                            >
+                                                <p>x</p>
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
                         </div>
 
-                        <Button className="mt-6 w-full bg-primary text-white hover:bg-primary/90">
+                        <Button
+                            className="mt-6 w-full bg-primary text-white hover:bg-primary/90"
+                            onClick={handleBookWithQuickTime}
+                            disabled={!activeQuickTimeId}
+                        >
                             선택한 시간으로 예약하기
                         </Button>
                     </Card>
                 </div>
             </div>
+
+            <Modal
+                isOpen={isQuickTimeModalOpen}
+                onClose={() => setIsQuickTimeModalOpen(false)}
+                title="빠른 예약 시간 추가"
+            >
+                <div className="space-y-4">
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700">라벨 (예: 내일 오전)</label>
+                        <input
+                            type="text"
+                            className="w-full rounded-md border border-gray-300 p-2 focus:border-primary focus:outline-none"
+                            placeholder="알기 쉬운 이름을 입력하세요"
+                            value={quickTimeForm.label}
+                            onChange={(e) => setQuickTimeForm({ ...quickTimeForm, label: e.target.value })}
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700">시간</label>
+                        <input
+                            type="time"
+                            className="w-full rounded-md border border-gray-300 p-2 focus:border-primary focus:outline-none"
+                            value={quickTimeForm.time}
+                            onChange={(e) => setQuickTimeForm({ ...quickTimeForm, time: e.target.value })}
+                        />
+                    </div>
+                    <div className="flex gap-3 pt-2">
+                        <Button variant="outline" className="flex-1" onClick={() => setIsQuickTimeModalOpen(false)}>
+                            취소
+                        </Button>
+                        <Button className="flex-1 bg-primary text-white" onClick={handleAddQuickTime}>
+                            추가하기
+                        </Button>
+                    </div>
+                </div>
+            </Modal>
         </main>
     );
 }
