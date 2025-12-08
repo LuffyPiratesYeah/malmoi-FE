@@ -8,7 +8,9 @@ import { useMemo, useState } from "react";
 import { ScheduleItem } from "@/types";
 import { cn } from "@/lib/utils";
 import { useBookingStore } from "@/lib/useBookingStore";
+import { useTodoStore } from "@/lib/useTodoStore";
 import { Modal } from "@/components/ui/Modal";
+import { Input } from "@/components/ui/Input";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 
@@ -47,7 +49,17 @@ export function DashboardClient({ schedules, isLoading }: DashboardClientProps) 
 
     // State for checkboxes
     const [prepChecks, setPrepChecks] = useState<boolean[]>([false, false, false]);
-    const [todoChecks, setTodoChecks] = useState<boolean[]>([false, false, false, false]);
+
+    // To-Do Store
+    const { todos, addTodo, removeTodo, toggleTodo } = useTodoStore();
+    const [newTodo, setNewTodo] = useState("");
+
+    const handleAddTodo = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!newTodo.trim()) return;
+        addTodo(newTodo);
+        setNewTodo("");
+    };
 
     // State for Quick Reserve
     const { quickTimes, activeQuickTimeId, setActiveQuickTime, addQuickTime, removeQuickTime } = useBookingStore();
@@ -80,17 +92,11 @@ export function DashboardClient({ schedules, isLoading }: DashboardClientProps) 
         setPrepChecks(newChecks);
     };
 
-    const toggleTodo = (index: number) => {
-        const newChecks = [...todoChecks];
-        newChecks[index] = !newChecks[index];
-        setTodoChecks(newChecks);
-    };
-
     return (
         <main className="mx-auto max-w-[1440px] px-8 py-8">
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                 {/* Left Column (Class Info) */}
-                <div className="lg:col-span-2 space-y-6">
+                <div className="lg:col-span-2 space-y-12">
                     <Card className="h-full border border-[#ced4da] shadow-sm">
                         {isLoading ? (
                             <div className="flex h-full flex-col items-center justify-center text-center py-12">
@@ -146,7 +152,7 @@ export function DashboardClient({ schedules, isLoading }: DashboardClientProps) 
                                     )}
                                 </div>
 
-                                <div className="flex items-start gap-6 mb-8">
+                                <div className="flex items-start gap-6 mb-10">
                                     <div className="h-16 w-16 flex-shrink-0 rounded-full bg-black text-white flex items-center justify-center font-bold text-xl overflow-hidden">
                                         {nextSchedule.class?.tutorName?.[0] || "튜터"}
                                     </div>
@@ -164,7 +170,7 @@ export function DashboardClient({ schedules, isLoading }: DashboardClientProps) 
                                     </div>
                                 </div>
 
-                                <div className="space-y-3 mb-8 text-sm">
+                                <div className="space-y-3 mb-10 text-sm">
                                     <div className="flex items-center">
                                         <span className="w-24 text-gray-500">수업 주제:</span>
                                         <span className="font-bold text-gray-900 text-base">{nextSchedule.class?.title || "등록된 수업 없음"}</span>
@@ -172,33 +178,6 @@ export function DashboardClient({ schedules, isLoading }: DashboardClientProps) 
                                     <div className="flex items-center">
                                         <span className="w-24 text-gray-500">형태:</span>
                                         <span className="font-medium text-gray-700">1:1 화상수업 · {nextSchedule.class?.type || "-"} · {nextSchedule.class?.level || "-"}</span>
-                                    </div>
-                                </div>
-
-                                <div className="border-t border-gray-100 pt-4">
-                                    <h4 className="mb-3 font-bold text-gray-900 text-sm">수업 준비</h4>
-                                    <div className="space-y-2">
-                                        {["예습 PDF 한 번 읽기", "오늘 회의 상황 메모해오기"].map((item, i) => (
-                                            <label key={i} className="flex items-center gap-2 cursor-pointer group">
-                                                <div className={cn(
-                                                    "flex h-4 w-4 items-center justify-center rounded border transition-colors",
-                                                    prepChecks[i] ? "bg-primary border-primary" : "border-gray-300 bg-white group-hover:border-primary"
-                                                )}>
-                                                    {prepChecks[i] && (
-                                                        <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                                        </svg>
-                                                    )}
-                                                </div>
-                                                <input
-                                                    type="checkbox"
-                                                    className="hidden"
-                                                    checked={prepChecks[i]}
-                                                    onChange={() => togglePrep(i)}
-                                                />
-                                                <span className={cn("text-xs transition-colors", prepChecks[i] ? "text-gray-900 font-medium" : "text-gray-600")}>{item}</span>
-                                            </label>
-                                        ))}
                                     </div>
                                 </div>
 
@@ -294,30 +273,59 @@ export function DashboardClient({ schedules, isLoading }: DashboardClientProps) 
 
                 {/* Right Column */}
                 <div className="space-y-6">
-                    {/* To Do */}
                     <Card title="오늘 할 일" subtitle="오늘 수업을 위해 이 정도만 준비해보세요." className="border border-[#ced4da] shadow-sm">
                         <div className="space-y-4 pt-2">
-                            {["예습 PDF 1회 읽기", "지난 수업 교정 문장 3개 복습", "K-Buddy와 3분 말하기 연습", "오늘 배울 단어 10개 미리 보기"].map((item, i) => (
-                                <label key={i} className="flex items-center gap-3 cursor-pointer group">
-                                    <div className={cn(
-                                        "flex h-6 w-6 flex-shrink-0 items-center justify-center rounded border transition-colors",
-                                        todoChecks[i] ? "bg-primary border-primary" : "border-gray-300 bg-white group-hover:border-primary"
-                                    )}>
-                                        {todoChecks[i] && (
-                                            <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            <div className="space-y-4 max-h-[120px] overflow-y-auto pr-1 custom-scrollbar">
+                                {todos.map((item) => (
+                                    <div key={item.id} className="flex items-center justify-between group">
+                                        <label className="flex items-center gap-3 cursor-pointer flex-1">
+                                            <div className={cn(
+                                                "flex h-6 w-6 flex-shrink-0 items-center justify-center rounded border transition-colors",
+                                                item.completed ? "bg-primary border-primary" : "border-gray-300 bg-white group-hover:border-primary"
+                                            )}>
+                                                {item.completed && (
+                                                    <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                )}
+                                            </div>
+                                            <input
+                                                type="checkbox"
+                                                className="hidden"
+                                                checked={item.completed}
+                                                onChange={() => toggleTodo(item.id)}
+                                            />
+                                            <span className={cn("text-sm transition-colors", item.completed ? "text-gray-900 font-medium" : "text-gray-600")}>{item.text}</span>
+                                        </label>
+                                        <button
+                                            onClick={() => removeTodo(item.id)}
+                                            className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-500 transition-all"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                <path d="M18 6 6 18" />
+                                                <path d="m6 6 12 12" />
                                             </svg>
-                                        )}
+                                        </button>
                                     </div>
-                                    <input
-                                        type="checkbox"
-                                        className="hidden"
-                                        checked={todoChecks[i]}
-                                        onChange={() => toggleTodo(i)}
-                                    />
-                                    <span className={cn("text-sm transition-colors", todoChecks[i] ? "text-gray-900 font-medium" : "text-gray-600")}>{item}</span>
-                                </label>
-                            ))}
+                                ))}
+                            </div>
+
+                            <form onSubmit={handleAddTodo} className="flex gap-2 pt-2">
+                                <input
+                                    type="text"
+                                    value={newTodo}
+                                    onChange={(e) => setNewTodo(e.target.value)}
+                                    placeholder="할 일을 입력하세요"
+                                    className="flex-1 text-sm border-b border-gray-200 py-1 focus:border-primary focus:outline-none bg-transparent"
+                                />
+                                <button
+                                    type="submit"
+                                    disabled={!newTodo.trim()}
+                                    className="text-xs font-bold text-primary disabled:opacity-50 hover:underline"
+                                >
+                                    추가
+                                </button>
+                            </form>
                         </div>
                     </Card>
 
@@ -336,7 +344,7 @@ export function DashboardClient({ schedules, isLoading }: DashboardClientProps) 
                             </button>
                         </div>
 
-                        <div className="space-y-3 max-h-[240px] overflow-y-auto pr-1 custom-scrollbar">
+                        <div className="space-y-3 max-h-[180px] overflow-y-auto pr-1 custom-scrollbar">
                             {quickTimes.length === 0 ? (
                                 <p className="text-sm text-gray-500 text-center py-4">등록된 빠른 예약 시간이 없습니다.</p>
                             ) : (
