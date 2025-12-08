@@ -22,6 +22,8 @@ export function ClassListClient({ classes }: ClassListClientProps) {
     const user = useAuthStore((state) => state.user);
     const router = useRouter();
     const [isBooking, setIsBooking] = useState(false);
+    const [bookingDate, setBookingDate] = useState("");
+    const [bookingTime, setBookingTime] = useState("");
 
     // Filter States
     const [selectedLevels, setSelectedLevels] = useState<string[]>([]);
@@ -48,6 +50,8 @@ export function ClassListClient({ classes }: ClassListClientProps) {
             return;
         }
         setSelectedClass(cls);
+        setBookingDate("");
+        setBookingTime("");
     };
 
     const handleBooking = async () => {
@@ -57,10 +61,24 @@ export function ClassListClient({ classes }: ClassListClientProps) {
             return;
         }
 
+        if (!bookingDate || !bookingTime) {
+            toast.error("날짜와 시간을 선택해주세요");
+            return;
+        }
+
         setIsBooking(true);
-        const now = new Date();
-        const defaultDate = now.toISOString().slice(0, 10);
-        const defaultTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+
+        // Combine date and time
+        // Note: In a real app, you might want to handle timezone properly
+        const dateTimeStr = `${bookingDate}T${bookingTime}:00`;
+        const bookingDateTime = new Date(dateTimeStr);
+
+        // Simple validation: cannot book in the past
+        if (bookingDateTime < new Date()) {
+            toast.error("과거 시점으로는 예약할 수 없습니다");
+            setIsBooking(false);
+            return;
+        }
 
         try {
             const response = await fetch("/api/schedules", {
@@ -68,8 +86,8 @@ export function ClassListClient({ classes }: ClassListClientProps) {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     classId: selectedClass.id,
-                    date: defaultDate,
-                    time: defaultTime,
+                    date: bookingDate,
+                    time: bookingTime,
                     studentId: user.id,
                 }),
             });
@@ -390,23 +408,46 @@ export function ClassListClient({ classes }: ClassListClientProps) {
                         onClose={() => setSelectedClass(null)}
                         title="수업예약"
                         footer={
-                            <div className="flex gap-3">
+                            <div className="flex gap-3 mt-5">
                                 <Button variant="outline" className="flex-1" onClick={() => setSelectedClass(null)}>
                                     취소
                                 </Button>
                                 <Button
                                     className="flex-1 bg-primary text-white disabled:opacity-70"
                                     onClick={handleBooking}
-                                    disabled={isBooking}
+                                    disabled={isBooking || !bookingDate || !bookingTime}
                                 >
                                     {isBooking ? "예약 중..." : "확인"}
                                 </Button>
                             </div>
                         }
                     >
-                        <p className="text-lg">
-                            <span className="font-bold text-primary">{selectedClass?.title}</span> 수업을 예약 하시겠습니까?
-                        </p>
+                        <div className="space-y-4">
+                            <p className="text-lg">
+                                <span className="font-bold text-primary">{selectedClass?.title}</span> 수업을 예약 하시겠습니까?
+                            </p>
+
+                            <div className="space-y-2">
+                                <label className="block text-sm font-medium text-gray-700">날짜 선택</label>
+                                <input
+                                    type="date"
+                                    className="w-full rounded-md border border-gray-300 p-2 focus:border-primary focus:outline-none"
+                                    value={bookingDate}
+                                    onChange={(e) => setBookingDate(e.target.value)}
+                                    min={new Date().toISOString().split('T')[0]}
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="block text-sm font-medium text-gray-700">시간 선택</label>
+                                <input
+                                    type="time"
+                                    className="w-full rounded-md border border-gray-300 p-2 focus:border-primary focus:outline-none"
+                                    value={bookingTime}
+                                    onChange={(e) => setBookingTime(e.target.value)}
+                                />
+                            </div>
+                        </div>
                     </Modal>
 
                     <Modal
@@ -421,9 +462,9 @@ export function ClassListClient({ classes }: ClassListClientProps) {
                                 승인되면 스케줄 페이지에서 확인할 수 있습니다.
                             </p>
                             <div className="flex gap-3 w-full">
-                                <Button 
-                                    variant="outline" 
-                                    className="flex-1" 
+                                <Button
+                                    variant="outline"
+                                    className="flex-1"
                                     onClick={() => setIsSuccessModalOpen(false)}
                                 >
                                     닫기
