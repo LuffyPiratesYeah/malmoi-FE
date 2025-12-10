@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase/server';
+import { getSupabaseAdmin } from '@/lib/supabase/server';
 
 export async function GET() {
   try {
+    const supabaseAdmin = await getSupabaseAdmin();
     const { data: classes, error } = await supabaseAdmin
       .from('classes')
       .select('*')
@@ -44,6 +45,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { title, description, level, type, category, image, tutorId, tutorName, details } = body;
+    const supabaseAdmin = await getSupabaseAdmin();
 
     // Validate required fields
     if (!title || !description || !level || !type || !category || !image || !tutorId || !tutorName) {

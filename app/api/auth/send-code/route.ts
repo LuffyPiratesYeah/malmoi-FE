@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabase/server";
+import { getSupabaseAdmin } from "@/lib/supabase/server";
 import bcrypt from "bcryptjs";
 
 const CODE_EXPIRY_MINUTES = 10;
@@ -61,6 +61,7 @@ export async function POST(request: Request) {
 
     const normalizedEmail = email.trim().toLowerCase();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const supabaseAdmin = await getSupabaseAdmin();
 
     if (!emailRegex.test(normalizedEmail)) {
       return NextResponse.json(

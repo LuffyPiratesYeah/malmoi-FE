@@ -1,17 +1,49 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseServiceKey =  await getCloudflareContext({ async: true }).env.SUPABASE_SERVICE_ROLE_KEY.get();
 
-if (!supabaseUrl || !supabaseServiceKey) {
-  throw new Error('Missing Supabase environment variables');
+let supabaseAdminPromise: Promise<SupabaseClient> | null = null;
+
+async function getServiceRoleKey() {
+  try {
+    const { env } = await getCloudflareContext({ async: true });
+    const secretBinding = env?.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (secretBinding && typeof secretBinding.get === 'function') {
+      return await secretBinding.get();
+    }
+  } catch {
+    // Ignore errors when Cloudflare context is not available (e.g., during static builds)
+  }
+
+  const fallbackKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (fallbackKey) {
+    return fallbackKey;
+  }
+
+  throw new Error('Missing Supabase service role key');
 }
 
-// Server-side client with service role key for admin operations
-export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false
+async function createSupabaseAdmin() {
+  if (!supabaseUrl) {
+    throw new Error('Missing Supabase environment variables');
   }
-});
+
+  const supabaseServiceKey = await getServiceRoleKey();
+
+  return createClient(supabaseUrl, supabaseServiceKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  });
+}
+
+export function getSupabaseAdmin() {
+  if (!supabaseAdminPromise) {
+    supabaseAdminPromise = createSupabaseAdmin();
+  }
+
+  return supabaseAdminPromise;
+}

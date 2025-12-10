@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabase/server";
+import { getSupabaseAdmin } from "@/lib/supabase/server";
 
 const allowedStatuses = ["pending", "scheduled", "completed", "cancelled"] as const;
 type AllowedStatus = (typeof allowedStatuses)[number];
@@ -66,6 +66,7 @@ export async function PUT(
   try {
     const { id } = await context.params;
     const body = await request.json();
+    const supabaseAdmin = await getSupabaseAdmin();
     const updates: {
       status?: string;
       date?: string;
@@ -133,6 +134,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await context.params;
+    const supabaseAdmin = await getSupabaseAdmin();
     const { error } = await supabaseAdmin
       .from("schedules")
       .delete()
