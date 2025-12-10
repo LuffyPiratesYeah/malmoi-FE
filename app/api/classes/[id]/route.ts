@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase/server';
+import { getSupabaseAdmin } from '@/lib/supabase/server';
 
 export async function GET(
   request: Request,
@@ -7,6 +7,7 @@ export async function GET(
 ) {
   try {
     const { id } = await context.params;
+    const supabaseAdmin = await getSupabaseAdmin();
 
     const { data: classItem, error } = await supabaseAdmin
       .from('classes')
@@ -52,6 +53,7 @@ export async function PUT(
   try {
     const { id } = await context.params;
     const body = await request.json();
+    const supabaseAdmin = await getSupabaseAdmin();
 
     // Ensure class exists and tutor is verified
     const { data: existingClass, error: classError } = await supabaseAdmin
@@ -142,6 +144,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await context.params;
+    const supabaseAdmin = await getSupabaseAdmin();
 
     const { data: existingClass, error: classError } = await supabaseAdmin
       .from('classes')
