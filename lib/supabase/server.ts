@@ -1,7 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabaseServiceKey =  await getCloudflareContext().env.SUPABASE_SERVICE_ROLE_KEY.get();
 
 if (!supabaseUrl || !supabaseServiceKey) {
   throw new Error('Missing Supabase environment variables');
