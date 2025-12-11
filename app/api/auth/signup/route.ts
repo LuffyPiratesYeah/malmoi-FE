@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase/server';
+import { getSupabaseAdmin } from '@/lib/supabase/server';
 import bcrypt from 'bcryptjs';
 
 export async function POST(request: Request) {
@@ -8,6 +8,7 @@ export async function POST(request: Request) {
     const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
     const trimmedCode = typeof verificationCode === 'string' ? verificationCode.trim() : '';
     const isBypassCode = trimmedCode === '1234';
+    const supabaseAdmin = await getSupabaseAdmin();
 
     // Validate input
     if (!normalizedEmail || !password || !name || !userType || !trimmedCode) {

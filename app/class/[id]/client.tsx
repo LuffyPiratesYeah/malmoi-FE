@@ -6,9 +6,10 @@ import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
 import { ClassItem } from "@/types";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 import { useAuthStore } from "@/lib/useAuthStore";
+import { useBookingStore } from "@/lib/useBookingStore";
 
 interface ClassDetailClientProps {
     classData: ClassItem;
@@ -16,6 +17,8 @@ interface ClassDetailClientProps {
 
 export function ClassDetailClient({ classData }: ClassDetailClientProps) {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const isQuickBooking = searchParams.get("quick") === "true";
     const user = useAuthStore((state) => state.user);
     const isOwner = user?.isTeacher && user?.id === classData.tutorId;
     const isStudent = user && !user.isTeacher;
@@ -38,6 +41,27 @@ export function ClassDetailClient({ classData }: ClassDetailClientProps) {
         time: "",
         contactInfo: "",
     });
+
+    // Quick Booking Store
+    const { quickTimes, activeQuickTimeId } = useBookingStore();
+    const activeQuickTime = quickTimes.find(qt => qt.id === activeQuickTimeId);
+
+    const handleOpenBookingModal = () => {
+        if (activeQuickTime && isQuickBooking) {
+            setBookingForm(prev => ({
+                ...prev,
+                date: "", // User must select date
+                time: activeQuickTime.time
+            }));
+        } else {
+            setBookingForm(prev => ({
+                ...prev,
+                date: "",
+                time: ""
+            }));
+        }
+        setIsBookingModalOpen(true);
+    };
 
     const handleEdit = async () => {
         setIsSubmitting(true);
@@ -214,7 +238,7 @@ export function ClassDetailClient({ classData }: ClassDetailClientProps) {
                                 </p>
                                 <Button
                                     className="w-full bg-primary text-white hover:bg-primary/90 rounded-lg"
-                                    onClick={() => setIsBookingModalOpen(true)}
+                                    onClick={handleOpenBookingModal}
                                 >
                                     수업 예약하기
                                 </Button>
@@ -332,6 +356,15 @@ export function ClassDetailClient({ classData }: ClassDetailClientProps) {
                             <span className="font-bold text-primary">{classData.title}</span> 수업을 예약합니다
                         </p>
                     </div>
+
+                    {activeQuickTime && isQuickBooking && (
+                        <div className="bg-blue-50 p-3 rounded-lg border border-blue-100 flex items-center gap-2 text-sm text-blue-800">
+                            <p>시계</p>
+                            <span>
+                                <span className="font-bold">{activeQuickTime.label}</span> ({activeQuickTime.time})으로 예약합니다. 날짜를 선택해주세요.
+                            </span>
+                        </div>
+                    )}
 
                     <Input
                         label="예약 날짜"
