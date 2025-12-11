@@ -8,8 +8,9 @@ import { useState } from "react";
 import { ClassItem } from "@/types";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/lib/useAuthStore";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
+import { useBookingStore } from "@/lib/useBookingStore";
 
 interface ClassListClientProps {
     classes: ClassItem[];
@@ -21,13 +22,18 @@ export function ClassListClient({ classes }: ClassListClientProps) {
     const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
     const user = useAuthStore((state) => state.user);
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const isQuickBooking = searchParams.get("quick") === "true";
     const [isBooking, setIsBooking] = useState(false);
+    const [bookingDate, setBookingDate] = useState("");
+    const [bookingTime, setBookingTime] = useState("");
 
     // Filter States
     const [selectedLevels, setSelectedLevels] = useState<string[]>([]);
     const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
     const [selectedFormats, setSelectedFormats] = useState<string[]>([]);
     const [selectedDuration, setSelectedDuration] = useState<string>("all");
+    const [selectedCategory, setSelectedCategory] = useState<string>("전체");
 
     // Search & Top Filter States
     const [searchQuery, setSearchQuery] = useState("");
@@ -39,6 +45,11 @@ export function ClassListClient({ classes }: ClassListClientProps) {
     const [likedClassIds, setLikedClassIds] = useState<Set<string>>(new Set());
     const [recentClassIds] = useState<Set<string>>(new Set([classes[0]?.id, classes[1]?.id].filter(Boolean))); // Mock: first two classes are "recent"
 
+    // Quick Booking Store
+    const { quickTimes, activeQuickTimeId } = useBookingStore();
+
+    const activeQuickTime = quickTimes.find(qt => qt.id === activeQuickTimeId);
+
     const handleBookingClick = (cls: ClassItem) => {
         if (!isAuthenticated) {
             toast.error("로그인이 필요합니다");
@@ -48,6 +59,14 @@ export function ClassListClient({ classes }: ClassListClientProps) {
             return;
         }
         setSelectedClass(cls);
+
+        if (activeQuickTime && isQuickBooking) {
+            setBookingDate(""); // User must select date
+            setBookingTime(activeQuickTime.time);
+        } else {
+            setBookingDate("");
+            setBookingTime("");
+        }
     };
 
     const handleBooking = async () => {
@@ -62,14 +81,17 @@ export function ClassListClient({ classes }: ClassListClientProps) {
         const defaultDate = now.toISOString().slice(0, 10);
         const defaultTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
 
+        const dateToUse = bookingDate || defaultDate;
+        const timeToUse = bookingTime || defaultTime;
+
         try {
             const response = await fetch("/api/schedules", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     classId: selectedClass.id,
-                    date: defaultDate,
-                    time: defaultTime,
+                    date: dateToUse,
+                    time: timeToUse,
                     studentId: user.id,
                 }),
             });
@@ -310,6 +332,7 @@ export function ClassListClient({ classes }: ClassListClientProps) {
                             ))}
                         </div>
                     </div>
+                    {/* Quick Booking Section Removed */}
                 </div>
 
                 {/* Main Grid */}
@@ -334,7 +357,10 @@ export function ClassListClient({ classes }: ClassListClientProps) {
                         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                             {filteredClasses.map((cls) => (
                                 <div key={cls.id} className="group overflow-hidden rounded-2xl border border-gray-200 bg-white transition-shadow hover:shadow-lg">
-                                    <div className="relative h-40 w-full bg-gray-200">
+                                    <div
+                                        className="aspect-video w-full bg-gray-200 relative cursor-pointer"
+                                        onClick={() => router.push(`/class/${cls.id}${isQuickBooking ? '?quick=true' : ''}`)}
+                                    >
                                         <img src={cls.image} alt={cls.title} className="h-full w-full object-cover" />
                                         <div className="absolute right-3 top-3 flex gap-2">
                                             <button
@@ -390,7 +416,7 @@ export function ClassListClient({ classes }: ClassListClientProps) {
                         onClose={() => setSelectedClass(null)}
                         title="수업예약"
                         footer={
-                            <div className="flex gap-3">
+                            <div className="flex gap-3 mt-6">
                                 <Button variant="outline" className="flex-1" onClick={() => setSelectedClass(null)}>
                                     취소
                                 </Button>
@@ -404,9 +430,41 @@ export function ClassListClient({ classes }: ClassListClientProps) {
                             </div>
                         }
                     >
-                        <p className="text-lg">
-                            <span className="font-bold text-primary">{selectedClass?.title}</span> 수업을 예약 하시겠습니까?
-                        </p>
+                        <div className="space-y-6">
+                            <div className="bg-blue-50 rounded-lg p-4">
+                                <p className="text-sm text-gray-700">
+                                    <span className="font-bold text-primary">{selectedClass?.title}</span> 수업을 예약합니다
+                                </p>
+                            </div>
+
+                            {activeQuickTime && isQuickBooking && (
+                                <div className="bg-blue-50 p-3 rounded-lg border border-blue-100 flex items-center gap-2 text-sm text-blue-800">
+                                    <span>
+                                        <span className="font-bold">{activeQuickTime.label}</span> ({activeQuickTime.time})으로 예약합니다. 날짜를 선택해주세요.
+                                    </span>
+                                </div>
+                            )}
+
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-gray-700">날짜</label>
+                                <input
+                                    type="date"
+                                    className="w-full rounded-md border border-gray-300 p-2 focus:border-primary focus:outline-none"
+                                    value={bookingDate}
+                                    onChange={(e) => setBookingDate(e.target.value)}
+                                    min={new Date().toISOString().split('T')[0]}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-gray-700">시간</label>
+                                <input
+                                    type="time"
+                                    className="w-full rounded-md border border-gray-300 p-2 focus:border-primary focus:outline-none"
+                                    value={bookingTime}
+                                    onChange={(e) => setBookingTime(e.target.value)}
+                                />
+                            </div>
+                        </div>
                     </Modal>
 
                     <Modal
@@ -421,9 +479,9 @@ export function ClassListClient({ classes }: ClassListClientProps) {
                                 승인되면 스케줄 페이지에서 확인할 수 있습니다.
                             </p>
                             <div className="flex gap-3 w-full">
-                                <Button 
-                                    variant="outline" 
-                                    className="flex-1" 
+                                <Button
+                                    variant="outline"
+                                    className="flex-1"
                                     onClick={() => setIsSuccessModalOpen(false)}
                                 >
                                     닫기
