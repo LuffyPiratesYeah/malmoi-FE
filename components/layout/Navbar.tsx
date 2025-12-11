@@ -56,11 +56,6 @@ export function Navbar() {
                             스케줄
                         </Link>
                     )}
-                    {isAuthenticated && user?.isTeacher && (
-                        <Link href="/manage-classes" className={getLinkClassName("/manage-classes")}>
-                            수업 관리
-                        </Link>
-                    )}
                 </div>
 
                 <div className="flex items-center gap-8 text-[14px]">

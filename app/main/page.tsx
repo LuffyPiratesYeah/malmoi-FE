@@ -3,8 +3,9 @@
 import { Navbar } from "@/components/layout/Navbar";
 import { Modal } from "@/components/ui/Modal";
 import { DashboardClient } from "./dashboard-client";
+import { ManageClassesClient } from "@/app/manage-classes/client";
 import { useEffect, useState } from "react";
-import { ScheduleItem } from "@/types";
+import { ScheduleItem, ClassItem } from "@/types";
 import { useAuthStore } from "@/lib/useAuthStore";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
@@ -14,6 +15,8 @@ export default function Dashboard() {
   const [schedules, setSchedules] = useState<ScheduleItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showTeacherVerificationModal, setShowTeacherVerificationModal] = useState(false);
+  const [myClasses, setMyClasses] = useState<ClassItem[]>([]);
+  const [classesLoading, setClassesLoading] = useState(true);
   const user = useAuthStore((state) => state.user);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const router = useRouter();
@@ -52,6 +55,28 @@ export default function Dashboard() {
     }
   }, [isAuthenticated, user]);
 
+  // 선생님일 때 수업 목록 로드 (userType이 teacher이면 isTeacher 여부와 관계없이)
+  useEffect(() => {
+    const loadClasses = async () => {
+      if (!user?.id || user?.userType !== "teacher") {
+        setClassesLoading(false);
+        return;
+      }
+      try {
+        const response = await fetch('/api/classes');
+        const allClasses: ClassItem[] = await response.json();
+        const filtered = allClasses.filter(c => c.tutorId === user?.id);
+        setMyClasses(filtered);
+      } catch (error) {
+        console.error("Failed to load classes:", error);
+        setMyClasses([]);
+      } finally {
+        setClassesLoading(false);
+      }
+    };
+    loadClasses();
+  }, [user?.id, user?.userType]);
+
   if (user?.userType === "admin") {
     return null;
   }
@@ -73,7 +98,25 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-white">
       <Navbar />
-      <DashboardClient schedules={schedules} isLoading={isLoading} />
+      
+      {/* 선생님: 수업 관리 화면 / 학생: 대시보드 화면 */}
+      {user?.userType === "teacher" ? (
+        <main className="mx-auto max-w-6xl px-8 py-12">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-900">수업 관리</h1>
+            <p className="text-gray-500 mt-2">내가 등록한 수업을 관리하세요</p>
+          </div>
+          {classesLoading ? (
+            <div className="text-center py-20">
+              <p className="text-gray-500">로딩 중...</p>
+            </div>
+          ) : (
+            <ManageClassesClient myClasses={myClasses} />
+          )}
+        </main>
+      ) : (
+        <DashboardClient schedules={schedules} isLoading={isLoading} />
+      )}
 
       {/* Teacher Verification Modal */}
       <Modal
