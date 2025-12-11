@@ -105,9 +105,9 @@ export default function NewClassPage() {
         <div className="min-h-screen bg-white pb-20">
             <Navbar />
 
-            <main className="mx-auto max-w-4xl px-8 py-12">
-                <div className="mb-12">
-                    <h1 className="text-2xl font-bold text-gray-900">강의/교재 추가하기</h1>
+            <main className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+                <div className="mb-8 sm:mb-12">
+                    <h1 className="text-xl sm:text-2xl font-bold text-gray-900">강의/교재 추가하기</h1>
                     <p className="text-sm text-gray-500">학생과 함께 수업할 강의를 추가해보세요</p>
                 </div>
 
@@ -121,9 +121,9 @@ export default function NewClassPage() {
                         </Button>
                     </div>
                 ) : (
-                <form onSubmit={handleSubmit} className="space-y-12">
+                <form onSubmit={handleSubmit} className="space-y-8 sm:space-y-12">
                     {/* Title */}
-                    <div className="space-y-4">
+                    <div className="space-y-3 sm:space-y-3 sm:space-y-4">
                         <label className="flex items-center gap-1 text-sm font-medium text-gray-600">
                             <span className="text-red-500">*</span>제목 추가하기
                         </label>
@@ -131,25 +131,25 @@ export default function NewClassPage() {
                             name="title"
                             type="text"
                             placeholder="제목을 입력해주세요"
-                            className="w-full rounded-xl border border-gray-200 p-4 text-sm focus:border-primary focus:outline-none"
+                            className="w-full rounded-xl border border-gray-200 p-3 sm:p-4 text-sm focus:border-primary focus:outline-none"
                             required
                         />
                     </div>
 
                     {/* Description */}
-                    <div className="space-y-4">
+                    <div className="space-y-3 sm:space-y-3 sm:space-y-4">
                         <label className="flex items-center gap-1 text-sm font-medium text-gray-600">
                             <span className="text-red-500">*</span>설명 추가하기
                         </label>
                         <textarea
                             name="description"
                             placeholder="추가설명을 입력해주세요"
-                            className="h-32 w-full resize-none rounded-xl border border-gray-200 p-4 text-sm focus:border-primary focus:outline-none"
+                            className="h-32 w-full resize-none rounded-xl border border-gray-200 p-3 sm:p-4 text-sm focus:border-primary focus:outline-none"
                             required
                         />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
                         {/* Thumbnail */}
                         <div className="space-y-2">
                             <label className="flex items-center gap-1 text-sm font-medium text-gray-600">
@@ -162,7 +162,7 @@ export default function NewClassPage() {
                                 className="hidden"
                                 id="thumbnail-input"
                             />
-                            <label htmlFor="thumbnail-input" className="flex h-80 cursor-pointer flex-col items-center justify-center rounded-xl border border-gray-200 bg-white hover:bg-gray-50 transition-colors text-center">
+                            <label htmlFor="thumbnail-input" className="flex h-48 sm:h-64 md:h-80 cursor-pointer flex-col items-center justify-center rounded-xl border border-gray-200 bg-white hover:bg-gray-50 transition-colors text-center">
                                 <span className="text-sm text-gray-300">사진을 추가해주세요</span>
                                 <span className="text-xs text-gray-300">600X500 이하</span>
                             </label>
@@ -233,21 +233,21 @@ export default function NewClassPage() {
                                 className="hidden"
                                 id="materials-input"
                             />
-                                <label htmlFor="materials-input" className="flex h-20 cursor-pointer flex-col items-center justify-center rounded-xl border border-gray-200 bg-white hover:bg-gray-50 transition-colors text-center">
+                                <label htmlFor="materials-input" className="flex h-16 sm:h-20 cursor-pointer flex-col items-center justify-center rounded-xl border border-gray-200 bg-white hover:bg-gray-50 transition-colors text-center">
                                     <span className="text-xs text-gray-300">형식에 맞는 자료를<br/>업로드해주세요</span>
                                 </label>
                             </div>
                         </div>
                     </div>
 
-                    <div className="flex justify-center gap-4 pt-8">
-                        <Link href="/manage-classes" className="w-40">
+                    <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 pt-6 sm:pt-8">
+                        <Link href="/manage-classes" className="w-full sm:w-40">
                             <Button variant="outline" className="w-full" type="button">
                                 취소
                             </Button>
                         </Link>
                         <Button
-                            className="w-40 bg-primary hover:bg-primary/90"
+                            className="w-full sm:w-40 bg-primary hover:bg-primary/90"
                             type="submit"
                             disabled={isSubmitting}
                         >

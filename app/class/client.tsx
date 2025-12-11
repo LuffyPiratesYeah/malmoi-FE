@@ -180,13 +180,13 @@ export function ClassListClient({ classes }: ClassListClientProps) {
         <div className="space-y-8">
             {/* Top Controls */}
             <div className="flex flex-col gap-8">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
                         <h1 className="text-2xl font-bold text-gray-900">강의/교재</h1>
                         <p className="text-sm text-gray-500">튜터와 함께 사용할 강의·교재를 미리 골라보세요.</p>
                     </div>
 
-                    <div className="flex items-center gap-4">
+                    <div className="hidden md:flex items-center gap-4">
                         <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none">
                             <div
                                 className={cn(
@@ -216,7 +216,7 @@ export function ClassListClient({ classes }: ClassListClientProps) {
                     </div>
                 </div>
 
-                <div className="flex gap-4">
+                <div className="flex flex-col md:flex-row gap-4">
                     <div className="relative flex-1">
                         <svg className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -231,17 +231,17 @@ export function ClassListClient({ classes }: ClassListClientProps) {
                     </div>
                     {useAuthStore((state) => state.user?.isTeacher) && (
                         <Link href="/class/new">
-                            <Button className="h-12 bg-blue-50 text-primary hover:bg-blue-100">
+                            <Button className="h-12 w-full md:w-auto bg-blue-50 text-primary hover:bg-blue-100">
                                 수업 추가하기
                             </Button>
                         </Link>
                     )}
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0">
                         {["비즈니스", "K-Drama", "TOPIK 대비", "입문자용"].map((tag) => (
                             <button
                                 key={tag}
                                 onClick={() => setSearchQuery(tag)}
-                                className="rounded-full bg-gray-100 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-200"
+                                className="rounded-full bg-gray-100 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-200 whitespace-nowrap flex-shrink-0"
                             >
                                 {tag}
                             </button>
@@ -252,7 +252,7 @@ export function ClassListClient({ classes }: ClassListClientProps) {
 
             <div className="flex gap-8">
                 {/* Sidebar Filters */}
-                <div className="w-64 flex-shrink-0 space-y-8">
+                <div className="hidden lg:block w-64 flex-shrink-0 space-y-8">
                     <div className="flex items-center justify-between">
                         <h3 className="font-bold text-gray-900">필터</h3>
                         <button onClick={resetFilters} className="text-xs text-primary hover:underline">모두 초기화</button>
@@ -350,9 +350,9 @@ export function ClassListClient({ classes }: ClassListClientProps) {
 
                 {/* Main Grid */}
                 <div className="flex-1">
-                    <div className="mb-4 flex items-center justify-between">
+                    <div className="mb-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
                         <span className="text-sm text-gray-500">총 <span className="font-bold text-primary">{filteredClasses.length}개</span> 강의</span>
-                        <div className="flex items-center gap-4">
+                        <div className="flex flex-wrap items-center gap-3 md:gap-4">
                             <span className="text-sm text-gray-500">정렬:</span>
                             <select className="rounded-md border border-gray-200 py-1 pl-2 pr-8 text-sm focus:border-primary focus:outline-none">
                                 <option>추천순</option>
@@ -367,7 +367,7 @@ export function ClassListClient({ classes }: ClassListClientProps) {
                     </div>
 
                     {filteredClasses.length > 0 ? (
-                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                             {filteredClasses.map((cls) => (
                                 <div key={cls.id} className="group overflow-hidden rounded-2xl border border-gray-200 bg-white transition-shadow hover:shadow-lg">
                                     <div

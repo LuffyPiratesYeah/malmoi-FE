@@ -26,6 +26,7 @@ export default function DescriptionPage() {
         <div className="mb-8 text-center">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">{title}</h1>
           <p className="text-gray-600">아래 단계를 따라 링크를 생성하고 붙여넣으세요</p>
+          <p className="text-sm text-primary font-medium mt-2">※ PC 기준으로 작성되었습니다</p>
         </div>
 
         {/* Zoom 방법 선택 탭 */}

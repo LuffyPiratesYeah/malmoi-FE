@@ -118,7 +118,7 @@ export default function OnboardingPage() {
                         </div>
 
                         {/* Main Heading */}
-                        <h1 className="text-6xl md:text-7xl font-bold text-gray-900 leading-tight tracking-tight">
+                        <h1 className="text-6xl md:text-7xl font-bold text-gray-900 leading-tight tracking-tight" style={{ wordBreak: 'keep-all' }}>
                             말모이와 함께
                             <br />
                             <span className="bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 bg-clip-text text-transparent">
@@ -127,7 +127,7 @@ export default function OnboardingPage() {
                         </h1>
 
                         {/* Subheading */}
-                        <p className="text-xl md:text-2xl text-gray-600 max-w-3xl mx-auto leading-relaxed font-light">
+                        <p className="text-xl md:text-2xl text-gray-600 max-w-3xl mx-auto leading-relaxed font-light" style={{ wordBreak: 'keep-all' }}>
                             원어민 선생님과 1:1 맞춤 수업으로
                             <br />
                             <span className="font-medium text-gray-900">자연스럽고 실용적인 한국어</span>를 배우세요
@@ -154,10 +154,10 @@ export default function OnboardingPage() {
                         <div className="group relative bg-white/70 backdrop-blur-sm rounded-3xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 hover:border-blue-200 hover:-translate-y-2">
                             <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-transparent rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                             <div className="relative">
-                                <h3 className="text-xl font-bold text-gray-900 mb-3">
+                                <h3 className="text-xl font-bold text-gray-900 mb-3" style={{ wordBreak: 'keep-all' }}>
                                     다양한 수업
                                 </h3>
-                                <p className="text-gray-600 leading-relaxed">
+                                <p className="text-gray-600 leading-relaxed" style={{ wordBreak: 'keep-all' }}>
                                     비즈니스, K-드라마, TOPIK 등<br />
                                     목적에 맞는 맞춤 수업을<br />
                                     선택하세요
@@ -169,10 +169,10 @@ export default function OnboardingPage() {
                         <div className="group relative bg-white/70 backdrop-blur-sm rounded-3xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 hover:border-blue-200 hover:-translate-y-2">
                             <div className="absolute inset-0 bg-gradient-to-br from-purple-50 to-transparent rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                             <div className="relative">
-                                <h3 className="text-xl font-bold text-gray-900 mb-3">
+                                <h3 className="text-xl font-bold text-gray-900 mb-3" style={{ wordBreak: 'keep-all' }}>
                                     전문 선생님
                                 </h3>
-                                <p className="text-gray-600 leading-relaxed">
+                                <p className="text-gray-600 leading-relaxed" style={{ wordBreak: 'keep-all' }}>
                                     경험 많은 원어민 선생님과<br />
                                     체계적이고 즐겁게<br />
                                     학습하세요
@@ -184,10 +184,10 @@ export default function OnboardingPage() {
                         <div className="group relative bg-white/70 backdrop-blur-sm rounded-3xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 hover:border-blue-200 hover:-translate-y-2">
                             <div className="absolute inset-0 bg-gradient-to-br from-orange-50 to-transparent rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                             <div className="relative">
-                                <h3 className="text-xl font-bold text-gray-900 mb-3">
+                                <h3 className="text-xl font-bold text-gray-900 mb-3" style={{ wordBreak: 'keep-all' }}>
                                     편리한 예약
                                 </h3>
-                                <p className="text-gray-600 leading-relaxed">
+                                <p className="text-gray-600 leading-relaxed" style={{ wordBreak: 'keep-all' }}>
                                     원하는 시간에<br />
                                     간편하게 수업을<br />
                                     예약하세요
@@ -200,10 +200,10 @@ export default function OnboardingPage() {
                 {/* CTA Section */}
                 <div className="mx-auto max-w-4xl px-6 py-16">
                     <div className="bg-primary rounded-3xl p-12 text-center shadow-2xl">
-                        <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+                        <h2 className="text-3xl md:text-4xl font-bold text-white mb-4" style={{ wordBreak: 'keep-all' }}>
                             지금 바로 시작하세요
                         </h2>
-                        <p className="text-blue-100 text-lg mb-8">
+                        <p className="text-blue-100 text-lg mb-8" style={{ wordBreak: 'keep-all' }}>
                             첫 수업을 예약하고 한국어 실력을 향상시켜보세요
                         </p>
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -251,8 +251,8 @@ export default function OnboardingPage() {
 
                     {/* Title and Description */}
                     <div className="text-center space-y-2">
-                        <h3 className="text-xl font-bold text-gray-900">선생님 인증이 필요해요</h3>
-                        <p className="text-gray-600 text-sm leading-relaxed">
+                        <h3 className="text-xl font-bold text-gray-900" style={{ wordBreak: 'keep-all' }}>선생님 인증이 필요해요</h3>
+                        <p className="text-gray-600 text-sm leading-relaxed" style={{ wordBreak: 'keep-all' }}>
                             튜터로 활동하시려면 인증이 필요합니다.<br />
                             마이페이지에서 서류를 업로드하고<br />
                             승인 요청을 보내주세요.

@@ -164,7 +164,7 @@ export function ClassDetailClient({ classData }: ClassDetailClientProps) {
         <>
             <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
                 {/* Hero Image */}
-                <div className="h-80 w-full bg-gray-200">
+                <div className="h-48 sm:h-64 md:h-80 w-full bg-gray-200">
                     <img
                         src={classData.image}
                         alt={classData.title}
@@ -172,10 +172,10 @@ export function ClassDetailClient({ classData }: ClassDetailClientProps) {
                     />
                 </div>
 
-                <div className="p-8">
-                    <div className="mb-6 flex items-start justify-between">
+                <div className="p-4 sm:p-6 md:p-4 sm:p-6 md:p-8">
+                    <div className="mb-6 flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-0">
                         <div>
-                            <h2 className="mb-4 text-2xl font-bold text-gray-900">{classData.title}</h2>
+                            <h2 className="mb-3 sm:mb-4 text-xl sm:text-2xl font-bold text-gray-900">{classData.title}</h2>
                             <div className="flex items-center gap-2">
                                 <Badge className="bg-blue-50 text-primary px-3 py-1 text-sm">{classData.level}</Badge>
                                 <span className="text-sm text-gray-500">{classData.type}</span>
@@ -184,16 +184,16 @@ export function ClassDetailClient({ classData }: ClassDetailClientProps) {
                         <span className="text-sm font-medium text-primary">{classData.category}</span>
                     </div>
 
-                    <div className="mb-12 border-b border-gray-100 pb-12">
-                        <p className="text-gray-600">
+                    <div className="mb-8 sm:mb-12 border-b border-gray-100 pb-8 sm:pb-12">
+                        <p className="text-gray-600 text-sm sm:text-base">
                             {classData.description}
                         </p>
                     </div>
 
                     {classData.details && (
-                        <div className="space-y-6 mb-12">
+                        <div className="space-y-4 sm:space-y-6 mb-8 sm:mb-12">
                             {classData.details.map((detail, i) => (
-                                <p key={i} className="text-gray-600">
+                                <p key={i} className="text-gray-600 text-sm sm:text-base">
                                     {detail}
                                 </p>
                             ))}
@@ -202,13 +202,13 @@ export function ClassDetailClient({ classData }: ClassDetailClientProps) {
 
                     {/* 선생님 전용 관리 버튼 */}
                     {isOwner && (
-                        <div className="border-t border-gray-200 pt-8">
-                            <div className="bg-blue-50 rounded-xl p-6">
-                                <h3 className="text-lg font-bold text-gray-900 mb-4">수업 관리</h3>
-                                <p className="text-sm text-gray-600 mb-6">
+                        <div className="border-t border-gray-200 pt-6 sm:pt-8">
+                            <div className="bg-blue-50 rounded-xl p-4 sm:p-6">
+                                <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-3 sm:mb-4">수업 관리</h3>
+                                <p className="text-sm text-gray-600 mb-4 sm:mb-6">
                                     수업 정보를 수정하거나 삭제할 수 있습니다
                                 </p>
-                                <div className="flex gap-3">
+                                <div className="flex flex-col sm:flex-row gap-3">
                                     <Button
                                         variant="outline"
                                         className="flex-1 rounded-lg border-primary text-primary hover:bg-blue-50"
@@ -230,10 +230,10 @@ export function ClassDetailClient({ classData }: ClassDetailClientProps) {
 
                     {/* 학생 전용 예약 버튼 */}
                     {isStudent && (
-                        <div className="border-t border-gray-200 pt-8">
-                            <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl p-6">
-                                <h3 className="text-lg font-bold text-gray-900 mb-2">수업 예약하기</h3>
-                                <p className="text-sm text-gray-600 mb-6">
+                        <div className="border-t border-gray-200 pt-6 sm:pt-8">
+                            <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl p-4 sm:p-6">
+                                <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-2">수업 예약하기</h3>
+                                <p className="text-sm text-gray-600 mb-4 sm:mb-6">
                                     원하는 날짜와 시간을 선택하여 수업을 예약하세요
                                 </p>
                                 <Button
