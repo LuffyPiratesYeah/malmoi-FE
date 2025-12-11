@@ -121,41 +121,43 @@ export function ProfileClient({ }: ProfileClientProps) {
                     </Button>
                 </div>
 
-                {/* Teacher Verification Status */}
-                <div className="flex items-center justify-between border-b border-gray-200 pb-8">
-                    <span className="w-32 text-sm font-bold text-gray-900">튜터 인증</span>
-                    <div className="flex-1">
-                        {user?.isTeacher ? (
-                            <div className="flex items-center gap-3">
-                                <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
-                                    인증 완료
-                                </span>
-                                <Link href="/manage-classes" className="text-sm text-primary hover:underline font-medium">
-                                    → 수업 관리하러 가기
-                                </Link>
-                            </div>
-                        ) : user?.verificationStatus === "pending" ? (
-                            <div className="flex items-center gap-3">
-                                <span className="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">
-                                    검토 중
-                                </span>
-                                <span className="text-sm text-gray-500">관리자 승인 후 튜터 권한이 부여됩니다.</span>
-                            </div>
-                        ) : (
-                            <span className="text-gray-500">미인증</span>
+                {/* Teacher Verification Status - Only show for teachers */}
+                {user?.userType === "teacher" && (
+                    <div className="flex items-center justify-between border-b border-gray-200 pb-8">
+                        <span className="w-32 text-sm font-bold text-gray-900">튜터 인증</span>
+                        <div className="flex-1">
+                            {user?.isTeacher ? (
+                                <div className="flex items-center gap-3">
+                                    <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                                        인증 완료
+                                    </span>
+                                    <Link href="/manage-classes" className="text-sm text-primary hover:underline font-medium">
+                                        → 수업 관리하러 가기
+                                    </Link>
+                                </div>
+                            ) : user?.verificationStatus === "pending" ? (
+                                <div className="flex items-center gap-3">
+                                    <span className="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">
+                                        검토 중
+                                    </span>
+                                    <span className="text-sm text-gray-500">관리자 승인 후 튜터 권한이 부여됩니다.</span>
+                                </div>
+                            ) : (
+                                <span className="text-gray-500">미인증</span>
+                            )}
+                        </div>
+                        {!user?.isTeacher && user?.verificationStatus !== "pending" && (
+                            <Button
+                                variant="primary"
+                                size="sm"
+                                className="w-24 rounded-full bg-[#0F766E] text-white hover:bg-[#0F766E]/90"
+                                onClick={() => setIsVerifyModalOpen(true)}
+                            >
+                                인증하기
+                            </Button>
                         )}
                     </div>
-                    {!user?.isTeacher && user?.verificationStatus !== "pending" && (
-                        <Button
-                            variant="primary"
-                            size="sm"
-                            className="w-24 rounded-full bg-[#0F766E] text-white hover:bg-[#0F766E]/90"
-                            onClick={() => setIsVerifyModalOpen(true)}
-                        >
-                            인증하기
-                        </Button>
-                    )}
-                </div>
+                )}
             </div>
 
             {/* Enrolled Classes for Students */}
