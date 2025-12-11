@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase/server';
+import { getSupabaseAdmin } from '@/lib/supabase/server';
 
 export async function GET(
   request: Request,
@@ -7,6 +7,7 @@ export async function GET(
 ) {
   try {
     const { id } = await context.params;
+    const supabaseAdmin = await getSupabaseAdmin();
 
     const { data: user, error } = await supabaseAdmin
       .from('users')
@@ -49,6 +50,7 @@ export async function PUT(
   try {
     const { id } = await context.params;
     const body = await request.json();
+    const supabaseAdmin = await getSupabaseAdmin();
 
     // Transform camelCase to snake_case for database
     const updateData: {

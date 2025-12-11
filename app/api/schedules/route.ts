@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase/server';
+import { getSupabaseAdmin } from '@/lib/supabase/server';
 
 export async function GET(request: Request) {
   try {
@@ -7,6 +7,7 @@ export async function GET(request: Request) {
     const classId = searchParams.get('classId');
     const studentId = searchParams.get('studentId');
 
+    const supabaseAdmin = await getSupabaseAdmin();
     let query = supabaseAdmin
       .from('schedules')
       .select(`
@@ -75,6 +76,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { classId, date, time, studentId, contactInfo, forceCreate } = body;
+    const supabaseAdmin = await getSupabaseAdmin();
 
     // Validate required fields
     if (!classId || !date || !time || !studentId) {

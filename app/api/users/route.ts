@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase/server';
+import { getSupabaseAdmin } from '@/lib/supabase/server';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -7,6 +7,7 @@ export async function GET(request: Request) {
   const userType = searchParams.get('userType');
 
   try {
+    const supabaseAdmin = await getSupabaseAdmin();
     let query = supabaseAdmin
       .from('users')
       .select('id, email, name, user_type, is_teacher, profile_image, verification_status')
