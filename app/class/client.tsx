@@ -94,8 +94,8 @@ export function ClassListClient({ classes }: ClassListClientProps) {
             return;
         }
 
-        const dateToUse = bookingDate || defaultDate;
-        const timeToUse = bookingTime || defaultTime;
+        const dateToUse = bookingDate;
+        const timeToUse = bookingTime;
 
         try {
             const response = await fetch("/api/schedules", {
