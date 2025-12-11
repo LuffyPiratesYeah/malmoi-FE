@@ -643,21 +643,45 @@ export function ManageClassDetailClient({ classData }: ManageClassDetailClientPr
                         </div>
                     )}
 
-                    <Input
-                        label="Zoom 링크"
-                        type="url"
-                        placeholder="https://zoom.us/j/..."
-                        value={linksForm.zoomLink}
-                        onChange={(e) => setLinksForm({ ...linksForm, zoomLink: e.target.value })}
-                    />
+                    <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                            <label className="text-sm font-medium text-gray-700">Zoom 링크</label>
+                            <a
+                                href="/description?type=zoom"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs text-primary hover:underline"
+                            >
+                                링크 삽입하는 법
+                            </a>
+                        </div>
+                        <Input
+                            type="url"
+                            placeholder="https://zoom.us/j/..."
+                            value={linksForm.zoomLink}
+                            onChange={(e) => setLinksForm({ ...linksForm, zoomLink: e.target.value })}
+                        />
+                    </div>
 
-                    <Input
-                        label="Google Docs 링크"
-                        type="url"
-                        placeholder="https://docs.google.com/document/d/..."
-                        value={linksForm.googleDocsLink}
-                        onChange={(e) => setLinksForm({ ...linksForm, googleDocsLink: e.target.value })}
-                    />
+                    <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                            <label className="text-sm font-medium text-gray-700">Google Docs 링크</label>
+                            <a
+                                href="/description?type=docs"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs text-primary hover:underline"
+                            >
+                                링크 삽입하는 법
+                            </a>
+                        </div>
+                        <Input
+                            type="url"
+                            placeholder="https://docs.google.com/document/d/..."
+                            value={linksForm.googleDocsLink}
+                            onChange={(e) => setLinksForm({ ...linksForm, googleDocsLink: e.target.value })}
+                        />
+                    </div>
 
                     <div className="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
                         <p className="text-sm text-yellow-800">
