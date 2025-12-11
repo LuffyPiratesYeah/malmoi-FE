@@ -59,7 +59,6 @@ export function ClassListClient({ classes }: ClassListClientProps) {
             return;
         }
         setSelectedClass(cls);
-
         if (activeQuickTime && isQuickBooking) {
             setBookingDate(""); // User must select date
             setBookingTime(activeQuickTime.time);
@@ -76,10 +75,24 @@ export function ClassListClient({ classes }: ClassListClientProps) {
             return;
         }
 
+        if (!bookingDate || !bookingTime) {
+            toast.error("날짜와 시간을 선택해주세요");
+            return;
+        }
+
         setIsBooking(true);
-        const now = new Date();
-        const defaultDate = now.toISOString().slice(0, 10);
-        const defaultTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+
+        // Combine date and time
+        // Note: In a real app, you might want to handle timezone properly
+        const dateTimeStr = `${bookingDate}T${bookingTime}:00`;
+        const bookingDateTime = new Date(dateTimeStr);
+
+        // Simple validation: cannot book in the past
+        if (bookingDateTime < new Date()) {
+            toast.error("과거 시점으로는 예약할 수 없습니다");
+            setIsBooking(false);
+            return;
+        }
 
         const dateToUse = bookingDate || defaultDate;
         const timeToUse = bookingTime || defaultTime;
@@ -423,7 +436,7 @@ export function ClassListClient({ classes }: ClassListClientProps) {
                                 <Button
                                     className="flex-1 bg-primary text-white disabled:opacity-70"
                                     onClick={handleBooking}
-                                    disabled={isBooking}
+                                    disabled={isBooking || !bookingDate || !bookingTime}
                                 >
                                     {isBooking ? "예약 중..." : "확인"}
                                 </Button>
@@ -456,7 +469,7 @@ export function ClassListClient({ classes }: ClassListClientProps) {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-700">시간</label>
+                                <label className="block text-sm font-medium text-gray-700">시간 선택</label>
                                 <input
                                     type="time"
                                     className="w-full rounded-md border border-gray-300 p-2 focus:border-primary focus:outline-none"
