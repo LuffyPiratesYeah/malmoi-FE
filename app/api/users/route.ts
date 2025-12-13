@@ -10,7 +10,7 @@ export async function GET(request: Request) {
     const supabaseAdmin = await getSupabaseAdmin();
     let query = supabaseAdmin
       .from('users')
-      .select('id, email, name, user_type, is_teacher, profile_image, verification_status')
+      .select('id, email, name, user_type, is_teacher, profile_image, verification_status, certification_doc_url, id_doc_url')
       .order('created_at', { ascending: false });
 
     if (verificationStatus) {
@@ -36,6 +36,8 @@ export async function GET(request: Request) {
       isTeacher: user.is_teacher,
       profileImage: user.profile_image,
       verificationStatus: user.verification_status,
+      certificationDocUrl: user.certification_doc_url,
+      idDocUrl: user.id_doc_url,
     }));
 
     return NextResponse.json(transformed);
