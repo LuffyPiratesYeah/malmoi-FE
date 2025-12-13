@@ -14,6 +14,10 @@ export function Navbar() {
     const logout = useAuthStore((state) => state.logout);
 
     const isActive = (path: string) => {
+        // /admin 페이지는 정확히 일치할 때만 활성화
+        if (path === "/admin") {
+            return pathname === "/admin";
+        }
         return pathname === path || pathname.startsWith(path + "/");
     };
 
@@ -45,16 +49,37 @@ export function Navbar() {
                 </Link>
 
                 <div className="flex items-center gap-12 text-[14px]">
-                    <Link href={mainPath} className={getLinkClassName(mainPath)}>
-                        메인
-                    </Link>
-                    <Link href="/class" className={getLinkClassName("/class")}>
-                        수업
-                    </Link>
-                    {isAuthenticated && user?.userType === "student" && (
-                        <Link href="/schedule" className={getLinkClassName("/schedule")}>
-                            스케줄
-                        </Link>
+                    {user?.userType === "admin" ? (
+                        <>
+                            <Link href="/class" className={getLinkClassName("/class")}>
+                                수업
+                            </Link>
+                            <Link href="/admin" className={getLinkClassName("/admin")}>
+                                사용자 관리
+                            </Link>
+                            <Link href="/admin/verification" className={getLinkClassName("/admin/verification")}>
+                                튜터 인증
+                            </Link>
+                        </>
+                    ) : (
+                        <>
+                            <Link href={mainPath} className={getLinkClassName(mainPath)}>
+                                메인
+                            </Link>
+                            <Link href="/class" className={getLinkClassName("/class")}>
+                                수업
+                            </Link>
+                            {isAuthenticated && user?.userType === "student" && (
+                                <Link href="/schedule" className={getLinkClassName("/schedule")}>
+                                    스케줄
+                                </Link>
+                            )}
+                            {isAuthenticated && user?.isTeacher && (
+                                <Link href="/manage-classes" className={getLinkClassName("/manage-classes")}>
+                                    수업 관리
+                                </Link>
+                            )}
+                        </>
                     )}
                 </div>
 

@@ -11,7 +11,7 @@ export async function GET(
 
     const { data: user, error } = await supabaseAdmin
       .from('users')
-      .select('id, email, name, user_type, is_teacher, profile_image, verification_status')
+      .select('id, email, name, user_type, is_teacher, profile_image, verification_status, certification_doc_url, id_doc_url')
       .eq('id', id)
       .single();
 
@@ -31,6 +31,8 @@ export async function GET(
       isTeacher: user.is_teacher,
       profileImage: user.profile_image,
       verificationStatus: user.verification_status,
+      certificationDocUrl: user.certification_doc_url,
+      idDocUrl: user.id_doc_url,
     };
 
     return NextResponse.json(transformedUser);
@@ -59,6 +61,8 @@ export async function PUT(
       verification_status?: string;
       is_teacher?: boolean;
       user_type?: string;
+      certification_doc_url?: string;
+      id_doc_url?: string;
     } = {};
     if (body.name) updateData.name = body.name;
     if (body.profileImage !== undefined) updateData.profile_image = body.profileImage;
@@ -67,12 +71,14 @@ export async function PUT(
     if (body.userType && ["student", "teacher"].includes(body.userType)) {
       updateData.user_type = body.userType;
     }
+    if (body.certificationDocUrl) updateData.certification_doc_url = body.certificationDocUrl;
+    if (body.idDocUrl) updateData.id_doc_url = body.idDocUrl;
 
     const { data: updatedUser, error } = await supabaseAdmin
       .from('users')
       .update(updateData)
       .eq('id', id)
-      .select('id, email, name, user_type, is_teacher, profile_image, verification_status')
+      .select('id, email, name, user_type, is_teacher, profile_image, verification_status, certification_doc_url, id_doc_url')
       .single();
 
     if (error || !updatedUser) {
@@ -91,6 +97,8 @@ export async function PUT(
       isTeacher: updatedUser.is_teacher,
       profileImage: updatedUser.profile_image,
       verificationStatus: updatedUser.verification_status,
+      certificationDocUrl: updatedUser.certification_doc_url,
+      idDocUrl: updatedUser.id_doc_url,
     };
 
     return NextResponse.json(transformedUser);
