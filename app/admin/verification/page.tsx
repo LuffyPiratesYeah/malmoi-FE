@@ -3,6 +3,7 @@
 import { Navbar } from "@/components/layout/Navbar";
 import { useEffect, useState, useCallback } from "react";
 import { Button } from "@/components/ui/Button";
+import { Modal } from "@/components/ui/Modal";
 import { useAuthStore } from "@/lib/useAuthStore";
 import toast from "react-hot-toast";
 
@@ -13,6 +14,8 @@ interface UserRow {
   userType: "student" | "teacher" | "admin";
   isTeacher: boolean;
   verificationStatus: "none" | "pending" | "verified";
+  certificationDocUrl?: string;
+  idDocUrl?: string;
 }
 
 export default function AdminVerificationPage() {
@@ -20,6 +23,8 @@ export default function AdminVerificationPage() {
   const [pendingTeachers, setPendingTeachers] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState<string | null>(null);
+  const [selectedTeacher, setSelectedTeacher] = useState<UserRow | null>(null);
+  const [isDocsModalOpen, setIsDocsModalOpen] = useState(false);
 
   const loadPending = useCallback(async () => {
     setLoading(true);
@@ -64,6 +69,11 @@ export default function AdminVerificationPage() {
     }
   };
 
+  const viewDocs = (teacher: UserRow) => {
+    setSelectedTeacher(teacher);
+    setIsDocsModalOpen(true);
+  };
+
   if (!user || user.userType !== "admin") {
     return (
       <div className="min-h-screen bg-white pb-20">
@@ -96,13 +106,21 @@ export default function AdminVerificationPage() {
         ) : (
           <div className="space-y-4">
             {pendingTeachers.map((teacher) => (
-              <div key={teacher.id} className="flex items-center justify-between rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm">
-                <div>
+              <div key={teacher.id} className="flex items-center justify-between rounded-xl border border-gray-200 bg-white px-6 py-4 shadow-sm">
+                <div className="flex-1">
                   <div className="font-bold text-gray-900">{teacher.name}</div>
                   <div className="text-sm text-gray-500">{teacher.email}</div>
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="rounded-full bg-yellow-50 px-3 py-1 text-xs font-bold text-yellow-700">대기</span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => viewDocs(teacher)}
+                    disabled={!teacher.certificationDocUrl && !teacher.idDocUrl}
+                  >
+                    서류 확인
+                  </Button>
                   <Button
                     className="bg-primary text-white hover:bg-primary/90"
                     size="sm"
@@ -116,6 +134,93 @@ export default function AdminVerificationPage() {
             ))}
           </div>
         )}
+
+        {/* Documents Modal */}
+        <Modal
+          isOpen={isDocsModalOpen}
+          onClose={() => setIsDocsModalOpen(false)}
+          title={`${selectedTeacher?.name} 인증 서류`}
+        >
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {selectedTeacher?.certificationDocUrl && (
+                <div className="space-y-2">
+                  <h4 className="text-sm font-bold text-gray-900">강사증/공무원증</h4>
+                  <div className="rounded-lg border border-gray-200 overflow-hidden">
+                    <img 
+                      src={selectedTeacher.certificationDocUrl} 
+                      alt="강사증" 
+                      className="w-full h-auto object-contain max-h-96"
+                    />
+                  </div>
+                  <a 
+                    href={selectedTeacher.certificationDocUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-xs text-primary hover:underline inline-flex items-center gap-1"
+                  >
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                    새 창에서 크게 보기
+                  </a>
+                </div>
+              )}
+
+              {selectedTeacher?.idDocUrl && (
+                <div className="space-y-2">
+                  <h4 className="text-sm font-bold text-gray-900">신분증/여권</h4>
+                  <div className="rounded-lg border border-gray-200 overflow-hidden">
+                    <img 
+                      src={selectedTeacher.idDocUrl} 
+                      alt="신분증" 
+                      className="w-full h-auto object-contain max-h-96"
+                    />
+                  </div>
+                  <a 
+                    href={selectedTeacher.idDocUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-xs text-primary hover:underline inline-flex items-center gap-1"
+                  >
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                    새 창에서 크게 보기
+                  </a>
+                </div>
+              )}
+
+              {!selectedTeacher?.certificationDocUrl && !selectedTeacher?.idDocUrl && (
+                <div className="col-span-full text-center py-8 text-gray-500">
+                  업로드된 서류가 없습니다.
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setIsDocsModalOpen(false)}
+              >
+                닫기
+              </Button>
+              {selectedTeacher && (
+                <Button
+                  className="flex-1 bg-primary text-white hover:bg-primary/90"
+                  onClick={() => {
+                    approve(selectedTeacher.id);
+                    setIsDocsModalOpen(false);
+                  }}
+                  disabled={submitting === selectedTeacher.id}
+                >
+                  {submitting === selectedTeacher.id ? "처리 중..." : "승인하기"}
+                </Button>
+              )}
+            </div>
+          </div>
+        </Modal>
       </main>
     </div>
   );

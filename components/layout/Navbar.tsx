@@ -17,6 +17,10 @@ export function Navbar() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     const isActive = (path: string) => {
+        // /admin 페이지는 정확히 일치할 때만 활성화
+        if (path === "/admin") {
+            return pathname === "/admin";
+        }
         return pathname === path || pathname.startsWith(path + "/");
     };
 
@@ -55,21 +59,37 @@ export function Navbar() {
 
                     {/* Desktop Navigation */}
                     <div className="hidden min-[430px]:flex items-center gap-12 text-[14px]">
-                        <Link href={mainPath} className={getLinkClassName(mainPath)}>
-                            메인
-                        </Link>
-                        <Link href="/class" className={getLinkClassName("/class")}>
-                            수업
-                        </Link>
-                        {isAuthenticated && user?.userType === "student" && (
-                            <Link href="/schedule" className={getLinkClassName("/schedule")}>
-                                스케줄
-                            </Link>
-                        )}
-                        {isAuthenticated && user?.isTeacher && (
-                            <Link href="/manage-classes" className={getLinkClassName("/manage-classes")}>
-                                수업 관리
-                            </Link>
+                        {user?.userType === "admin" ? (
+                            <>
+                                <Link href="/class" className={getLinkClassName("/class")}>
+                                    수업
+                                </Link>
+                                <Link href="/admin" className={getLinkClassName("/admin")}>
+                                    사용자 관리
+                                </Link>
+                                <Link href="/admin/verification" className={getLinkClassName("/admin/verification")}>
+                                    튜터 인증
+                                </Link>
+                            </>
+                        ) : (
+                            <>
+                                <Link href={mainPath} className={getLinkClassName(mainPath)}>
+                                    메인
+                                </Link>
+                                <Link href="/class" className={getLinkClassName("/class")}>
+                                    수업
+                                </Link>
+                                {isAuthenticated && user?.userType === "student" && (
+                                    <Link href="/schedule" className={getLinkClassName("/schedule")}>
+                                        스케줄
+                                    </Link>
+                                )}
+                                {isAuthenticated && user?.isTeacher && (
+                                    <Link href="/manage-classes" className={getLinkClassName("/manage-classes")}>
+                                        수업 관리
+                                    </Link>
+                                )}
+                            </>
                         )}
                     </div>
 
@@ -132,84 +152,112 @@ export function Navbar() {
                 <div className={`fixed top-[60px] right-0 bottom-0 w-64 bg-white shadow-lg z-40 min-[430px]:hidden overflow-y-auto transform transition-transform duration-300 ease-in-out ${
                     isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
                 }`}>
-                        <div className="flex flex-col p-6 space-y-6">
-                            {/* Navigation Links */}
-                            <div className="flex flex-col space-y-4">
-                                <Link
-                                    href={mainPath}
-                                    className="text-gray-900 hover:text-primary font-medium transition-colors py-2"
-                                    onClick={handleLinkClick}
-                                >
-                                    메인
-                                </Link>
-                                <Link
-                                    href="/class"
-                                    className="text-gray-900 hover:text-primary font-medium transition-colors py-2"
-                                    onClick={handleLinkClick}
-                                >
-                                    수업
-                                </Link>
-                                {isAuthenticated && user?.userType === "student" && (
+                    <div className="flex flex-col p-6 space-y-6">
+                        {/* Navigation Links */}
+                        <div className="flex flex-col space-y-4">
+                            {user?.userType === "admin" ? (
+                                <>
                                     <Link
-                                        href="/schedule"
+                                        href="/class"
                                         className="text-gray-900 hover:text-primary font-medium transition-colors py-2"
                                         onClick={handleLinkClick}
                                     >
-                                        스케줄
+                                        수업
                                     </Link>
-                                )}
-                                {isAuthenticated && user?.isTeacher && (
                                     <Link
-                                        href="/manage-classes"
+                                        href="/admin"
                                         className="text-gray-900 hover:text-primary font-medium transition-colors py-2"
                                         onClick={handleLinkClick}
                                     >
-                                        수업 관리
+                                        사용자 관리
                                     </Link>
-                                )}
-                            </div>
-
-                            {/* Divider */}
-                            <div className="border-t border-gray-200" />
-
-                            {/* Auth Section */}
-                            <div className="flex flex-col space-y-3">
-                                {isAuthenticated ? (
-                                    <>
+                                    <Link
+                                        href="/admin/verification"
+                                        className="text-gray-900 hover:text-primary font-medium transition-colors py-2"
+                                        onClick={handleLinkClick}
+                                    >
+                                        튜터 인증
+                                    </Link>
+                                </>
+                            ) : (
+                                <>
+                                    <Link
+                                        href={mainPath}
+                                        className="text-gray-900 hover:text-primary font-medium transition-colors py-2"
+                                        onClick={handleLinkClick}
+                                    >
+                                        메인
+                                    </Link>
+                                    <Link
+                                        href="/class"
+                                        className="text-gray-900 hover:text-primary font-medium transition-colors py-2"
+                                        onClick={handleLinkClick}
+                                    >
+                                        수업
+                                    </Link>
+                                    {isAuthenticated && user?.userType === "student" && (
                                         <Link
-                                            href="/profile"
+                                            href="/schedule"
                                             className="text-gray-900 hover:text-primary font-medium transition-colors py-2"
                                             onClick={handleLinkClick}
                                         >
-                                            {user?.name || "사용자"}님
+                                            스케줄
                                         </Link>
-                                        <button
-                                            onClick={handleLogout}
-                                            className="text-left text-gray-500 hover:text-gray-900 font-medium transition-colors py-2"
+                                    )}
+                                    {isAuthenticated && user?.isTeacher && (
+                                        <Link
+                                            href="/manage-classes"
+                                            className="text-gray-900 hover:text-primary font-medium transition-colors py-2"
+                                            onClick={handleLinkClick}
                                         >
-                                            로그아웃
-                                        </button>
-                                    </>
-                                ) : (
-                                    <>
-                                        <Link href="/login" onClick={handleLinkClick}>
-                                            <Button
-                                                variant="outline"
-                                                className="w-full rounded-full border-gray-300 hover:bg-gray-50"
-                                            >
-                                                로그인
-                                            </Button>
+                                            수업 관리
                                         </Link>
-                                        <Link href="/signup" onClick={handleLinkClick}>
-                                            <Button className="w-full rounded-full bg-primary hover:bg-primary/90 text-white">
-                                                회원가입
-                                            </Button>
-                                        </Link>
-                                    </>
-                                )}
-                            </div>
+                                    )}
+                                </>
+                            )}
+                        </div>
+
+                        {/* Divider */}
+                        <div className="border-t border-gray-200" />
+
+                        {/* Auth Section */}
+                        <div className="flex flex-col space-y-3">
+                            {isAuthenticated ? (
+                                <>
+                                    <Link
+                                        href="/profile"
+                                        className="text-gray-900 hover:text-primary font-medium transition-colors py-2"
+                                        onClick={handleLinkClick}
+                                    >
+                                        {user?.name || "사용자"}님
+                                    </Link>
+                                    <button
+                                        onClick={handleLogout}
+                                        className="text-left text-gray-500 hover:text-gray-900 font-medium transition-colors py-2"
+                                    >
+                                        로그아웃
+                                    </button>
+                                </>
+                            ) : (
+                                <>
+                                    <Link href="/login" onClick={handleLinkClick}>
+                                        <Button
+                                            variant="outline"
+                                            className="w-full rounded-full border-gray-300 hover:bg-gray-50"
+                                        >
+                                            로그인
+                                        </Button>
+                                    </Link>
+                                    <Link href="/signup" onClick={handleLinkClick}>
+                                        <Button className="w-full rounded-full bg-primary hover:bg-primary/90 text-white">
+                                            회원가입
+                                        </Button>
+                                    </Link>
+                                </>
+                            )}
                         </div>
                     </div>
+                </div>
             </>
         </>
     );

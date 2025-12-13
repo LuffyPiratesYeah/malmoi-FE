@@ -12,6 +12,9 @@ export default function NewClassPage() {
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isCheckingUser, setIsCheckingUser] = useState(true);
+    const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+    const [materialFile, setMaterialFile] = useState<File | null>(null);
+    const [thumbnailPreview, setThumbnailPreview] = useState<string>("");
     const user = useAuthStore((state) => state.user);
     const updateUser = useAuthStore((state) => state.updateUser);
 
@@ -49,6 +52,43 @@ export default function NewClassPage() {
         };
     }, [user?.id, updateUser]);
 
+    const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setThumbnailFile(file);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setThumbnailPreview(reader.result as string);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleMaterialChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setMaterialFile(file);
+        }
+    };
+
+    const uploadFile = async (file: File, bucket: string): Promise<string> => {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("bucket", bucket);
+
+        const response = await fetch("/api/upload", {
+            method: "POST",
+            body: formData,
+        });
+
+        if (!response.ok) {
+            throw new Error("파일 업로드에 실패했습니다");
+        }
+
+        const data = await response.json();
+        return data.url;
+    };
+
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (!user?.id || !user.isTeacher) {
@@ -67,19 +107,38 @@ export default function NewClassPage() {
         const categorySelections = formData.getAll("category").filter(Boolean) as string[];
         const typeSelections = formData.getAll("type").filter(Boolean) as string[];
 
-        const payload = {
-            title,
-            description,
-            level,
-            category: categorySelections[0] || "일반",
-            type: typeSelections[0] || "영상 · 25분",
-            image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&q=80&w=1000",
-            tutorId: user.id,
-            tutorName: user.name,
-            details: [],
-        };
+        if (!thumbnailFile) {
+            toast.error("썸네일 이미지를 선택해주세요");
+            setIsSubmitting(false);
+            return;
+        }
+
+        if (!materialFile) {
+            toast.error("수업 자료를 선택해주세요");
+            setIsSubmitting(false);
+            return;
+        }
 
         try {
+            // 이미지 업로드 (bucket: image)
+            const imageUrl = await uploadFile(thumbnailFile, "image");
+            
+            // 자료 업로드 (bucket: pdf)
+            const materialUrl = await uploadFile(materialFile, "pdf");
+
+            const payload = {
+                title,
+                description,
+                level,
+                category: categorySelections[0] || "일반",
+                type: typeSelections[0] || "영상 · 25분",
+                image: imageUrl,
+                materialUrl: materialUrl,
+                tutorId: user.id,
+                tutorName: user.name,
+                details: [],
+            };
+
             const response = await fetch("/api/classes", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -158,13 +217,20 @@ export default function NewClassPage() {
                             <input
                                 name="thumbnail"
                                 type="file"
-                                accept=".jpg,.jpeg,.png"
+                                accept=".jpg,.jpeg,.png,.webp"
                                 className="hidden"
                                 id="thumbnail-input"
+                                onChange={handleThumbnailChange}
                             />
-                            <label htmlFor="thumbnail-input" className="flex h-48 sm:h-64 md:h-80 cursor-pointer flex-col items-center justify-center rounded-xl border border-gray-200 bg-white hover:bg-gray-50 transition-colors text-center">
-                                <span className="text-sm text-gray-300">사진을 추가해주세요</span>
-                                <span className="text-xs text-gray-300">600X500 이하</span>
+                            <label htmlFor="thumbnail-input" className="flex h-48 sm:h-64 md:h-80 cursor-pointer flex-col items-center justify-center rounded-xl border border-gray-200 bg-white hover:bg-gray-50 transition-colors text-center overflow-hidden">
+                                {thumbnailPreview ? (
+                                    <img src={thumbnailPreview} alt="미리보기" className="w-full h-full object-cover" />
+                                ) : (
+                                    <>
+                                        <span className="text-sm text-gray-300">사진을 추가해주세요</span>
+                                        <span className="text-xs text-gray-300">600X500 이하</span>
+                                    </>
+                                )}
                             </label>
                         </div>
 
@@ -227,14 +293,19 @@ export default function NewClassPage() {
                                     <span className="text-red-500">*</span>자료
                                 </label>
                                 <input
-                                name="materials"
-                                type="file"
-                                accept=".pdf,.pptx"
-                                className="hidden"
-                                id="materials-input"
-                            />
+                                    name="materials"
+                                    type="file"
+                                    accept=".pdf,.doc,.docx,.hwp"
+                                    className="hidden"
+                                    id="materials-input"
+                                    onChange={handleMaterialChange}
+                                />
                                 <label htmlFor="materials-input" className="flex h-16 sm:h-20 cursor-pointer flex-col items-center justify-center rounded-xl border border-gray-200 bg-white hover:bg-gray-50 transition-colors text-center">
-                                    <span className="text-xs text-gray-300">형식에 맞는 자료를<br/>업로드해주세요</span>
+                                    {materialFile ? (
+                                        <span className="text-xs text-gray-700 font-medium">{materialFile.name}</span>
+                                    ) : (
+                                        <span className="text-xs text-gray-300">형식에 맞는 자료를<br/>업로드해주세요<br/>(PDF, DOC, DOCX, HWP)</span>
+                                    )}
                                 </label>
                             </div>
                         </div>
