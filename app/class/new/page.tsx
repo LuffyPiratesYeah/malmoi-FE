@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { useAuthStore } from "@/lib/useAuthStore";
+import { supabase } from "@/lib/supabase/client";
 
 export default function NewClassPage() {
     const router = useRouter();
@@ -71,23 +72,36 @@ export default function NewClassPage() {
         }
     };
 
-    const uploadFile = async (file: File, bucket: string): Promise<string> => {
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("bucket", bucket);
 
-        const response = await fetch("/api/upload", {
-            method: "POST",
-            body: formData,
+
+    const uploadFile = async (file: File, bucket: string): Promise<string> => {
+    // 1) 파일명 생성
+    const ext = file.name.split(".").pop() || "";
+    const timestamp = Date.now();
+    const randomStr = Math.random().toString(36).substring(2, 8);
+    const fileName = `${timestamp}-${randomStr}.${ext}`;
+
+    // 2) Supabase Storage에 직접 업로드 (브라우저 → Supabase)
+    const { data, error } = await supabase.storage
+        .from(bucket) // "image" / "pdf" 등
+        .upload(fileName, file, {
+        cacheControl: "3600",
+        upsert: false,
         });
 
-        if (!response.ok) {
-            throw new Error("파일 업로드에 실패했습니다");
-        }
+    if (error) {
+        console.error("Supabase upload error:", error);
+        throw new Error("파일 업로드에 실패했습니다");
+    }
 
-        const data = await response.json();
-        return data.url;
+    // 3) public URL 생성
+    const {
+        data: { publicUrl },
+    } = supabase.storage.from(bucket).getPublicUrl(fileName);
+
+    return publicUrl;
     };
+
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
