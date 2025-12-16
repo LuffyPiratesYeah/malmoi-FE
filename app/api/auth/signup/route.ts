@@ -40,61 +40,60 @@ export async function POST(request: Request) {
     }
 
     // Validate verification code
-    if (!isBypassCode) {
-      const { data: latestCode, error: codeError } = await supabaseAdmin
-        .from('email_verification_codes')
-        .select('id, code_hash, expires_at, consumed')
-        .eq('email', normalizedEmail)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+    // Validate verification code
+    const { data: latestCode, error: codeError } = await supabaseAdmin
+      .from('email_verification_codes')
+      .select('id, code_hash, expires_at, consumed')
+      .eq('email', normalizedEmail)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-      if (codeError && codeError.code !== 'PGRST116') {
-        console.error('Verification code fetch error:', codeError);
-        return NextResponse.json(
-          { error: '이메일 인증을 확인할 수 없습니다. 잠시 후 다시 시도해주세요.' },
-          { status: 500 }
-        );
-      }
+    if (codeError && codeError.code !== 'PGRST116') {
+      console.error('Verification code fetch error:', codeError);
+      return NextResponse.json(
+        { error: '이메일 인증을 확인할 수 없습니다. 잠시 후 다시 시도해주세요.' },
+        { status: 500 }
+      );
+    }
 
-      if (!latestCode) {
-        return NextResponse.json(
-          { error: '이메일 인증을 먼저 완료해주세요.' },
-          { status: 400 }
-        );
-      }
+    if (!latestCode) {
+      return NextResponse.json(
+        { error: '이메일 인증을 먼저 완료해주세요.' },
+        { status: 400 }
+      );
+    }
 
-      if (latestCode.consumed) {
-        return NextResponse.json(
-          { error: '이미 사용된 인증코드입니다. 다시 받아주세요.' },
-          { status: 400 }
-        );
-      }
+    if (latestCode.consumed) {
+      return NextResponse.json(
+        { error: '이미 사용된 인증코드입니다. 다시 받아주세요.' },
+        { status: 400 }
+      );
+    }
 
-      const isExpired = new Date(latestCode.expires_at) < new Date();
-      if (isExpired) {
-        return NextResponse.json(
-          { error: '인증코드가 만료되었습니다. 다시 받아주세요.' },
-          { status: 400 }
-        );
-      }
+    const isExpired = new Date(latestCode.expires_at) < new Date();
+    if (isExpired) {
+      return NextResponse.json(
+        { error: '인증코드가 만료되었습니다. 다시 받아주세요.' },
+        { status: 400 }
+      );
+    }
 
-      const isCodeValid = await bcrypt.compare(trimmedCode, latestCode.code_hash);
-      if (!isCodeValid) {
-        return NextResponse.json(
-          { error: '인증코드가 올바르지 않습니다.' },
-          { status: 400 }
-        );
-      }
+    const isCodeValid = await bcrypt.compare(trimmedCode, latestCode.code_hash);
+    if (!isCodeValid) {
+      return NextResponse.json(
+        { error: '인증코드가 올바르지 않습니다.' },
+        { status: 400 }
+      );
+    }
 
-      const { error: consumeError } = await supabaseAdmin
-        .from('email_verification_codes')
-        .update({ consumed: true })
-        .eq('id', latestCode.id);
+    const { error: consumeError } = await supabaseAdmin
+      .from('email_verification_codes')
+      .update({ consumed: true })
+      .eq('id', latestCode.id);
 
-      if (consumeError) {
-        console.error('Verification code consume error:', consumeError);
-      }
+    if (consumeError) {
+      console.error('Verification code consume error:', consumeError);
     }
 
     // Hash password

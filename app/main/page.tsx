@@ -85,7 +85,7 @@ export default function Dashboard() {
     return (
       <div className="min-h-screen bg-white">
         <Navbar />
-        <main className="mx-auto max-w-4xl px-8 py-12 text-center">
+        <main className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12 text-center">
           <p className="text-gray-600 mb-6">로그인 후 대시보드를 확인할 수 있습니다.</p>
           <Link href="/login">
             <Button className="bg-primary text-white">로그인하기</Button>
