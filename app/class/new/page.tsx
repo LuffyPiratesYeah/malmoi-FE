@@ -166,8 +166,13 @@ export default function NewClassPage() {
 
             toast.success("수업이 등록되었습니다!");
             router.push("/manage-classes");
-        } catch (error) {
-            console.error("Failed to create class", error);
+        } catch (error : any) {
+            console.error("Supabase upload error (full):", {
+                message: error.message,
+                name: error.name,
+                statusCode: (error as any)?.statusCode,
+                error,
+                });
             toast.error("수업 등록에 실패했습니다");
         } finally {
             setIsSubmitting(false);
