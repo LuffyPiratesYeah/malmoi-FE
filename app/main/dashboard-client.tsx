@@ -10,7 +10,6 @@ import { cn } from "@/lib/utils";
 import { useBookingStore } from "@/lib/useBookingStore";
 import { useTodoStore } from "@/lib/useTodoStore";
 import { Modal } from "@/components/ui/Modal";
-import { Input } from "@/components/ui/Input";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 
@@ -86,14 +85,8 @@ export function DashboardClient({ schedules, isLoading }: DashboardClientProps) 
         router.push("/class?quick=true");
     };
 
-    const togglePrep = (index: number) => {
-        const newChecks = [...prepChecks];
-        newChecks[index] = !newChecks[index];
-        setPrepChecks(newChecks);
-    };
-
     return (
-        <main className="mx-auto max-w-[1440px] px-8 py-8">
+        <main className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                 {/* Left Column (Class Info) */}
                 <div className="lg:col-span-2 space-y-12">
@@ -104,17 +97,17 @@ export function DashboardClient({ schedules, isLoading }: DashboardClientProps) 
                             </div>
                         ) : nextSchedule ? (
                             <div>
-                                <div className="flex items-center justify-between mb-8">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 sm:mb-8 gap-3">
                                     <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-1.5 text-sm font-bold text-primary">
                                         <Image src="/watch.svg" alt="Clock" width={16} height={16} />
                                         {formatDateLabel(nextSchedule.date)} {nextSchedule.time} 수업 예정
                                     </div>
 
                                     {nextSchedule.status === "scheduled" && (
-                                        <div className="flex gap-3">
+                                        <div className="flex flex-col sm:flex-row gap-2 sm:flex-col sm:flex-row gap-2 sm:gap-3">
                                             {nextSchedule.zoomLink ? (
                                                 <Button
-                                                    className="h-11 px-6 text-sm font-bold bg-[#13c0ff] hover:bg-[#13c0ff]/90 text-white shadow-md shadow-blue-200 border-none"
+                                                    className="h-11 px-4 sm:px-6 text-xs sm:text-sm font-bold bg-[#13c0ff] hover:bg-[#13c0ff]/90 text-white shadow-md shadow-blue-200 border-none w-full sm:w-auto"
                                                     onClick={() => window.open(nextSchedule.zoomLink, '_blank')}
                                                 >
                                                     <Image src="/video.svg" alt="Video" width={18} height={18} className="mr-2 brightness-0 invert" />
@@ -122,7 +115,7 @@ export function DashboardClient({ schedules, isLoading }: DashboardClientProps) 
                                                 </Button>
                                             ) : (
                                                 <Button
-                                                    className="h-11 px-6 text-sm font-bold bg-gray-300 text-gray-500 border-none cursor-not-allowed"
+                                                    className="h-11 px-4 sm:px-6 text-xs sm:text-sm font-bold bg-gray-300 text-gray-500 border-none cursor-not-allowed w-full sm:w-auto"
                                                     disabled
                                                 >
                                                     <Image src="/video.svg" alt="Video" width={18} height={18} className="mr-2" />
@@ -132,7 +125,7 @@ export function DashboardClient({ schedules, isLoading }: DashboardClientProps) 
                                             {nextSchedule.googleDocsLink ? (
                                                 <Button
                                                     variant="outline"
-                                                    className="h-11 px-6 text-sm font-bold rounded-full border-gray-200 text-gray-700 hover:bg-gray-50"
+                                                    className="h-11 px-4 sm:px-6 text-xs sm:text-sm font-bold rounded-full border-gray-200 text-gray-700 hover:bg-gray-50 w-full sm:w-auto"
                                                     onClick={() => window.open(nextSchedule.googleDocsLink, '_blank')}
                                                 >
                                                     <Image src="/google_note.svg" alt="Note" width={18} height={18} className="mr-2" />
@@ -141,7 +134,7 @@ export function DashboardClient({ schedules, isLoading }: DashboardClientProps) 
                                             ) : (
                                                 <Button
                                                     variant="outline"
-                                                    className="h-11 px-6 text-sm font-bold rounded-full border-gray-200 text-gray-400 cursor-not-allowed"
+                                                    className="h-11 px-4 sm:px-6 text-xs sm:text-sm font-bold rounded-full border-gray-200 text-gray-400 cursor-not-allowed w-full sm:w-auto"
                                                     disabled
                                                 >
                                                     <Image src="/google_note.svg" alt="Note" width={18} height={18} className="mr-2" />
@@ -152,13 +145,13 @@ export function DashboardClient({ schedules, isLoading }: DashboardClientProps) 
                                     )}
                                 </div>
 
-                                <div className="flex items-start gap-6 mb-10">
+                                <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6 mb-8 sm:mb-10">
                                     <div className="h-16 w-16 flex-shrink-0 rounded-full bg-black text-white flex items-center justify-center font-bold text-xl overflow-hidden">
                                         {nextSchedule.class?.tutorName?.[0] || "튜터"}
                                     </div>
                                     <div>
-                                        <h3 className="text-xl font-bold text-gray-900 mb-1">{nextSchedule.class?.tutorName || "튜터"} 선생님</h3>
-                                        <p className="text-sm text-gray-500 mb-3">전직 국어 교사 · 한국어교원 2급</p>
+                                        <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-1">{nextSchedule.class?.tutorName || "튜터"} 선생님</h3>
+                                        <p className="text-xs sm:text-sm text-gray-500 mb-3">전직 국어 교사 · 한국어교원 2급</p>
                                         <div className="flex gap-2">
                                             {nextSchedule.class?.category && (
                                                 <span className="rounded-md bg-blue-50 px-2.5 py-1 text-xs font-bold text-primary">{nextSchedule.class.category}</span>
@@ -170,13 +163,13 @@ export function DashboardClient({ schedules, isLoading }: DashboardClientProps) 
                                     </div>
                                 </div>
 
-                                <div className="space-y-3 mb-10 text-sm">
-                                    <div className="flex items-center">
-                                        <span className="w-24 text-gray-500">수업 주제:</span>
-                                        <span className="font-bold text-gray-900 text-base">{nextSchedule.class?.title || "등록된 수업 없음"}</span>
+                                <div className="space-y-3 mb-8 sm:mb-10 text-xs sm:text-sm">
+                                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-0">
+                                        <span className="w-full sm:w-24 text-gray-500">수업 주제:</span>
+                                        <span className="font-bold text-gray-900 text-sm sm:text-base">{nextSchedule.class?.title || "등록된 수업 없음"}</span>
                                     </div>
-                                    <div className="flex items-center">
-                                        <span className="w-24 text-gray-500">형태:</span>
+                                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-0">
+                                        <span className="w-full sm:w-24 text-gray-500">형태:</span>
                                         <span className="font-medium text-gray-700">1:1 화상수업 · {nextSchedule.class?.type || "-"} · {nextSchedule.class?.level || "-"}</span>
                                     </div>
                                 </div>
@@ -197,13 +190,13 @@ export function DashboardClient({ schedules, isLoading }: DashboardClientProps) 
                                     {sortedSchedules.length > 0 ? (
                                         <div className="space-y-3">
                                             {sortedSchedules.slice(0, 3).map((item, i) => (
-                                                <div key={i} className="flex items-center justify-between rounded-lg bg-gray-50 p-3 hover:bg-gray-100 transition-colors group">
-                                                    <div className="flex items-center gap-4">
-                                                        <span className="rounded-md bg-gray-200 px-2 py-1 text-xs font-bold text-gray-700 min-w-[120px] text-center">
+                                                <div key={i} className="flex flex-col sm:flex-row sm:items-center justify-between rounded-lg bg-gray-50 p-3 hover:bg-gray-100 transition-colors group gap-2">
+                                                    <div className="flex flex-wrap items-center gap-2 sm:gap-4">
+                                                        <span className="rounded-md bg-gray-200 px-2 py-1 text-xs font-bold text-gray-700 min-w-[100px] sm:min-w-[120px] text-center">
                                                             {formatDateLabel(item.date)}
                                                         </span>
-                                                        <span className="font-bold text-gray-900 text-sm">{item.time.split('-')[0]}</span>
-                                                        <div className="flex items-center gap-2">
+                                                        <span className="font-bold text-gray-900 text-xs sm:text-sm">{item.time.split('-')[0]}</span>
+                                                        <div className="flex items-center gap-2 flex-wrap">
                                                             <span className="text-xs text-gray-600">{item.class?.tutorName || "튜터"} 선생님</span>
                                                             <span className={`px-2 py-0.5 rounded text-xs font-medium ${item.status === "pending"
                                                                 ? "bg-yellow-50 text-yellow-700"

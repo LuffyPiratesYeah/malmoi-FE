@@ -281,16 +281,16 @@ export function ManageClassDetailClient({ classData }: ManageClassDetailClientPr
     return (
         <div className="space-y-6">
             {/* Class Info Card */}
-            <div className="rounded-2xl border border-gray-200 bg-white p-6">
-                <div className="flex items-start justify-between">
-                    <div className="flex gap-4">
+            <div className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-6">
+                <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
+                    <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
                         <img
                             src={classData.image}
                             alt={classData.title}
-                            className="w-24 h-24 rounded-lg object-cover"
+                            className="w-full sm:w-24 h-48 sm:h-24 rounded-lg object-cover"
                         />
                         <div>
-                            <h2 className="text-xl font-bold text-gray-900 mb-2">{classData.title}</h2>
+                            <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-2">{classData.title}</h2>
                             <div className="flex items-center gap-2 text-sm">
                                 <span className="bg-blue-50 text-primary px-2 py-1 rounded font-bold">
                                     {classData.level}
@@ -310,8 +310,8 @@ export function ManageClassDetailClient({ classData }: ManageClassDetailClientPr
             </div>
 
             {/* Tabs */}
-            <div className="border-b border-gray-200">
-                <div className="flex gap-8">
+            <div className="border-b border-gray-200 overflow-x-auto">
+                <div className="flex gap-4 sm:gap-8 min-w-max">
                     <button
                         onClick={() => setActiveTab("schedule")}
                         className={`pb-4 px-2 text-sm font-bold transition-colors relative ${activeTab === "schedule"
@@ -353,19 +353,19 @@ export function ManageClassDetailClient({ classData }: ManageClassDetailClientPr
 
             {/* Tab Content */}
             {activeTab === "schedule" ? (
-                <div className="rounded-2xl border border-gray-200 bg-white p-8">
-                    <div className="flex items-center justify-between mb-6">
+                <div className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-6 md:p-8">
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 gap-4">
                         <div>
-                            <h3 className="text-lg font-bold text-gray-900">신청/예약 관리</h3>
+                            <h3 className="text-base sm:text-lg font-bold text-gray-900">신청/예약 관리</h3>
                             <p className="text-sm text-gray-500">학생들의 예약을 확인하고 상태를 업데이트하세요.</p>
                         </div>
-                        <div className="flex items-center gap-3 text-sm text-gray-600">
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs sm:text-sm text-gray-600">
                             <span className="rounded-full bg-yellow-50 px-3 py-1 font-bold text-yellow-700">대기 {summary.pending}</span>
                             <span className="rounded-full bg-blue-50 px-3 py-1 font-bold text-blue-700">예약 {summary.scheduled}</span>
                             <span className="rounded-full bg-green-50 px-3 py-1 font-bold text-green-700">완료 {summary.completed}</span>
                             <span className="rounded-full bg-gray-100 px-3 py-1 font-bold text-gray-700">취소 {summary.cancelled}</span>
                             <Button
-                                className="bg-primary text-white"
+                                className="bg-primary text-white w-full sm:w-auto"
                                 onClick={() => setIsScheduleModalOpen(true)}
                                 disabled={members.length === 0}
                                 title={members.length === 0 ? "수강생이 있어야 일정을 추가할 수 있습니다." : ""}
