@@ -2,30 +2,47 @@
 
 import { Logo } from "@/components/ui/Logo";
 import { Button } from "@/components/ui/Button";
+import { Modal } from "@/components/ui/Modal";
 import Link from "next/link";
 import { useAuthStore } from "@/lib/useAuthStore";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export default function OnboardingPage() {
     const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
     const user = useAuthStore((state) => state.user);
-    const router = useRouter();
     const [isLoading, setIsLoading] = useState(true);
+    const [showTeacherVerificationModal, setShowTeacherVerificationModal] = useState(false);
+    const primaryCtaHref = isAuthenticated
+        ? user?.userType === "admin"
+            ? "/admin/verification"
+            : "/main"
+        : "/signup";
+    const primaryCtaLabel = isAuthenticated
+        ? user?.userType === "admin"
+            ? "관리자 페이지"
+            : "내 대시보드"
+        : "무료로 시작하기";
 
-    // 로그인 사용자는 /main으로 리다이렉트
     useEffect(() => {
-        // 인증 상태 확인 후 로딩 해제
-        const checkAuth = async () => {
-            if (isAuthenticated) {
-                router.push("/main");
-            } else {
-                setIsLoading(false);
-            }
-        };
+        // Wait for client-side hydration of auth store
+        setIsLoading(false);
+    }, []);
 
-        checkAuth();
-    }, [isAuthenticated, router]);
+    useEffect(() => {
+        // Show teacher verification modal for unverified teachers
+        console.log("🔍 Debug Modal Conditions:", { 
+            isAuthenticated, 
+            userType: user?.userType, 
+            isTeacher: user?.isTeacher, 
+            verificationStatus: user?.verificationStatus,
+            shouldShow: isAuthenticated && user?.userType === "teacher" && !user?.isTeacher && user?.verificationStatus !== "pending"
+        });
+        
+        if (isAuthenticated && user?.userType === "teacher" && !user?.isTeacher && user?.verificationStatus !== "pending") {
+            console.log("✅ Showing teacher verification modal");
+            setShowTeacherVerificationModal(true);
+        }
+    }, [isAuthenticated, user]);
 
     // 로딩 중이면 로딩 화면 표시
     if (isLoading) {
@@ -55,21 +72,33 @@ export default function OnboardingPage() {
                 <div className="mx-auto max-w-7xl px-6 py-4 flex items-center justify-between">
                     <Logo size="sm" />
                     <div className="flex items-center gap-3">
-                        <Link href="/login">
-                            <Button
-                                variant="outline"
-                                className="h-10 px-5 rounded-full border-gray-300 hover:bg-gray-50 text-sm font-medium"
-                            >
-                                로그인
-                            </Button>
-                        </Link>
-                        <Link href="/signup">
-                            <Button
-                                className="h-10 px-5 rounded-full bg-primary hover:bg-primary/90 text-white text-sm font-medium shadow-lg shadow-blue-200/50"
-                            >
-                                회원가입
-                            </Button>
-                        </Link>
+                        {isAuthenticated ? (
+                            <Link href={primaryCtaHref}>
+                                <Button
+                                    className="h-10 px-5 rounded-full bg-primary hover:bg-primary/90 text-white text-sm font-medium shadow-lg shadow-blue-200/50"
+                                >
+                                    {primaryCtaLabel}
+                                </Button>
+                            </Link>
+                        ) : (
+                            <>
+                                <Link href="/login">
+                                    <Button
+                                        variant="outline"
+                                        className="h-10 px-5 rounded-full border-gray-300 hover:bg-gray-50 text-sm font-medium"
+                                    >
+                                        로그인
+                                    </Button>
+                                </Link>
+                                <Link href="/signup">
+                                    <Button
+                                        className="h-10 px-5 rounded-full bg-primary hover:bg-primary/90 text-white text-sm font-medium shadow-lg shadow-blue-200/50"
+                                    >
+                                        회원가입
+                                    </Button>
+                                </Link>
+                            </>
+                        )}
                     </div>
                 </div>
             </header>
@@ -89,7 +118,7 @@ export default function OnboardingPage() {
                         </div>
 
                         {/* Main Heading */}
-                        <h1 className="text-6xl md:text-7xl font-bold text-gray-900 leading-tight tracking-tight">
+                        <h1 className="text-6xl md:text-7xl font-bold text-gray-900 leading-tight tracking-tight" style={{ wordBreak: 'keep-all' }}>
                             말모이와 함께
                             <br />
                             <span className="bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 bg-clip-text text-transparent">
@@ -98,7 +127,7 @@ export default function OnboardingPage() {
                         </h1>
 
                         {/* Subheading */}
-                        <p className="text-xl md:text-2xl text-gray-600 max-w-3xl mx-auto leading-relaxed font-light">
+                        <p className="text-xl md:text-2xl text-gray-600 max-w-3xl mx-auto leading-relaxed font-light" style={{ wordBreak: 'keep-all' }}>
                             원어민 선생님과 1:1 맞춤 수업으로
                             <br />
                             <span className="font-medium text-gray-900">자연스럽고 실용적인 한국어</span>를 배우세요
@@ -125,10 +154,10 @@ export default function OnboardingPage() {
                         <div className="group relative bg-white/70 backdrop-blur-sm rounded-3xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 hover:border-blue-200 hover:-translate-y-2">
                             <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-transparent rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                             <div className="relative">
-                                <h3 className="text-xl font-bold text-gray-900 mb-3">
+                                <h3 className="text-xl font-bold text-gray-900 mb-3" style={{ wordBreak: 'keep-all' }}>
                                     다양한 수업
                                 </h3>
-                                <p className="text-gray-600 leading-relaxed">
+                                <p className="text-gray-600 leading-relaxed" style={{ wordBreak: 'keep-all' }}>
                                     비즈니스, K-드라마, TOPIK 등<br />
                                     목적에 맞는 맞춤 수업을<br />
                                     선택하세요
@@ -140,10 +169,10 @@ export default function OnboardingPage() {
                         <div className="group relative bg-white/70 backdrop-blur-sm rounded-3xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 hover:border-blue-200 hover:-translate-y-2">
                             <div className="absolute inset-0 bg-gradient-to-br from-purple-50 to-transparent rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                             <div className="relative">
-                                <h3 className="text-xl font-bold text-gray-900 mb-3">
+                                <h3 className="text-xl font-bold text-gray-900 mb-3" style={{ wordBreak: 'keep-all' }}>
                                     전문 선생님
                                 </h3>
-                                <p className="text-gray-600 leading-relaxed">
+                                <p className="text-gray-600 leading-relaxed" style={{ wordBreak: 'keep-all' }}>
                                     경험 많은 원어민 선생님과<br />
                                     체계적이고 즐겁게<br />
                                     학습하세요
@@ -155,10 +184,10 @@ export default function OnboardingPage() {
                         <div className="group relative bg-white/70 backdrop-blur-sm rounded-3xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 hover:border-blue-200 hover:-translate-y-2">
                             <div className="absolute inset-0 bg-gradient-to-br from-orange-50 to-transparent rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                             <div className="relative">
-                                <h3 className="text-xl font-bold text-gray-900 mb-3">
+                                <h3 className="text-xl font-bold text-gray-900 mb-3" style={{ wordBreak: 'keep-all' }}>
                                     편리한 예약
                                 </h3>
-                                <p className="text-gray-600 leading-relaxed">
+                                <p className="text-gray-600 leading-relaxed" style={{ wordBreak: 'keep-all' }}>
                                     원하는 시간에<br />
                                     간편하게 수업을<br />
                                     예약하세요
@@ -171,19 +200,19 @@ export default function OnboardingPage() {
                 {/* CTA Section */}
                 <div className="mx-auto max-w-4xl px-6 py-16">
                     <div className="bg-primary rounded-3xl p-12 text-center shadow-2xl">
-                        <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+                        <h2 className="text-3xl md:text-4xl font-bold text-white mb-4" style={{ wordBreak: 'keep-all' }}>
                             지금 바로 시작하세요
                         </h2>
-                        <p className="text-blue-100 text-lg mb-8">
+                        <p className="text-blue-100 text-lg mb-8" style={{ wordBreak: 'keep-all' }}>
                             첫 수업을 예약하고 한국어 실력을 향상시켜보세요
                         </p>
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                            <Link href="/signup" className="w-full sm:w-auto">
+                            <Link href={primaryCtaHref} className="w-full sm:w-auto">
                                 <Button
                                     className="w-full sm:w-auto h-12 px-8 bg-white text-gray-900 hover:bg-gray-50 font-bold rounded-xl shadow-lg"
                                     size="lg"
                                 >
-                                    <p className="text-gray-900 hover:text-white">무료로 시작하기</p>
+                                    <p className="text-gray-900 hover:text-white">{primaryCtaLabel}</p>
                                 </Button>
                             </Link>
                             <Link href="/class" className="w-full sm:w-auto">
@@ -206,6 +235,50 @@ export default function OnboardingPage() {
                     <p>© 2025 말모이. All rights reserved.</p>
                 </div>
             </footer>
+
+            {/* Teacher Verification Modal */}
+            <Modal
+                isOpen={showTeacherVerificationModal}
+                onClose={() => setShowTeacherVerificationModal(false)}
+            >
+                <div className="flex flex-col items-center space-y-6">
+                    {/* Icon */}
+                    <div className="h-16 w-16 rounded-full bg-blue-100 flex items-center justify-center">
+                        <svg className="h-8 w-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                        </svg>
+                    </div>
+
+                    {/* Title and Description */}
+                    <div className="text-center space-y-2">
+                        <h3 className="text-xl font-bold text-gray-900" style={{ wordBreak: 'keep-all' }}>선생님 인증이 필요해요</h3>
+                        <p className="text-gray-600 text-sm leading-relaxed" style={{ wordBreak: 'keep-all' }}>
+                            튜터로 활동하시려면 인증이 필요합니다.<br />
+                            마이페이지에서 서류를 업로드하고<br />
+                            승인 요청을 보내주세요.
+                        </p>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="w-full space-y-3">
+                        <Link href="/profile" className="block w-full">
+                            <Button
+                                className="w-full bg-primary text-white hover:bg-primary/90"
+                                onClick={() => setShowTeacherVerificationModal(false)}
+                            >
+                                인증하러 가기
+                            </Button>
+                        </Link>
+                        <Button
+                            variant="outline"
+                            className="w-full"
+                            onClick={() => setShowTeacherVerificationModal(false)}
+                        >
+                            나중에 하기
+                        </Button>
+                    </div>
+                </div>
+            </Modal>
 
             <style jsx>{`
                 @keyframes blob {

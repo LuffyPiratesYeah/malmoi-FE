@@ -3,22 +3,23 @@
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useAuthStore } from "@/lib/useAuthStore";
 import toast from "react-hot-toast";
 import { ClassItem, ScheduleItem } from "@/types";
-import { verifyTeacherAction } from "@/app/actions";
 
-
-interface ProfileClientProps { }
+type ProfileClientProps = Record<string, never>;
 
 export function ProfileClient({ }: ProfileClientProps) {
     const user = useAuthStore((state) => state.user);
+    const updateUser = useAuthStore((state) => state.updateUser);
     // Verification State
     const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
     const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
-    const [uploadedFiles, setUploadedFiles] = useState<{ type: string; name: string }[]>([]);
+    const [certFile, setCertFile] = useState<File | null>(null);
+    const [idFile, setIdFile] = useState<File | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
     const [enrolledClasses, setEnrolledClasses] = useState<ClassItem[]>([]);
 
     // Edit Profile State
@@ -30,40 +31,107 @@ export function ProfileClient({ }: ProfileClientProps) {
         newPassword: "",
     });
 
-    useEffect(() => {
-        if (user?.userType === "student") {
-            loadEnrolledClasses();
-        }
-    }, [user?.id, user?.userType]);
-
-    const loadEnrolledClasses = async () => {
+    const loadEnrolledClasses = useCallback(async () => {
         try {
-            const scheduleResponse = await fetch('/api/schedules');
+            if (!user?.id) return;
+            const scheduleResponse = await fetch(`/api/schedules?studentId=${user.id}`);
             const allSchedules: ScheduleItem[] = await scheduleResponse.json();
-            const mySchedules = allSchedules.filter(s => s.studentId === user?.id);
             const uniqueClasses = Array.from(
-                new Map(mySchedules.map(s => [s.class.id, s.class])).values()
+                new Map(allSchedules.map(s => [s.class.id, s.class])).values()
             );
             setEnrolledClasses(uniqueClasses);
         } catch (error) {
             console.error("Failed to load enrolled classes:", error);
         }
+    }, [user?.id]);
+
+    useEffect(() => {
+        if (user?.userType === "student") {
+            loadEnrolledClasses();
+        }
+    }, [loadEnrolledClasses, user?.userType]);
+
+    const handleCertFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setCertFile(file);
+        }
+    };
+
+    const handleIdFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setIdFile(file);
+        }
+    };
+
+    const uploadFile = async (file: File, bucket: string): Promise<string> => {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("bucket", bucket);
+
+        const response = await fetch("/api/upload", {
+            method: "POST",
+            body: formData,
+        });
+
+        if (!response.ok) {
+            throw new Error("파일 업로드에 실패했습니다");
+        }
+
+        const data = await response.json();
+        return data.url;
     };
 
     const handleVerificationSubmit = async () => {
-        await verifyTeacherAction();
-        setIsVerifyModalOpen(false);
-        setIsSuccessModalOpen(true);
+        if (!user?.id) {
+            toast.error("로그인이 필요합니다");
+            return;
+        }
+
+        if (!certFile || !idFile) {
+            toast.error("모든 서류를 업로드해주세요");
+            return;
+        }
+
+        setIsUploading(true);
+
+        try {
+            // 파일 업로드 (이미지 버킷 사용)
+            const certUrl = await uploadFile(certFile, "image");
+            const idUrl = await uploadFile(idFile, "image");
+
+            const response = await fetch(`/api/users/${user.id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    verificationStatus: "pending",
+                    isTeacher: false,
+                    userType: "teacher",
+                    certificationDocUrl: certUrl,
+                    idDocUrl: idUrl,
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error(await response.text());
+            }
+
+            updateUser({ verificationStatus: "pending", isTeacher: false, userType: "teacher" });
+            setCertFile(null);
+            setIdFile(null);
+            setIsVerifyModalOpen(false);
+            setIsSuccessModalOpen(true);
+        } catch (error) {
+            console.error("Failed to submit verification", error);
+            toast.error("인증 요청에 실패했습니다");
+        } finally {
+            setIsUploading(false);
+        }
     };
 
     const handleSuccessConfirm = () => {
         setIsSuccessModalOpen(false);
-    };
-
-    const handleFileUpload = (type: string) => {
-        // Mock file upload
-        const fileName = `upload_${Date.now()}.png`;
-        setUploadedFiles(prev => [...prev, { type, name: fileName }]);
     };
 
     return (
@@ -98,34 +166,43 @@ export function ProfileClient({ }: ProfileClientProps) {
                     </Button>
                 </div>
 
-                {/* Teacher Verification Status */}
-                <div className="flex items-center justify-between border-b border-gray-200 pb-8">
-                    <span className="w-32 text-sm font-bold text-gray-900">튜터 인증</span>
-                    <div className="flex-1">
-                        {user?.userType === "teacher" ? (
-                            <div className="flex items-center gap-3">
-                                <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
-                                    인증 완료
-                                </span>
-                                <Link href="/manage-classes" className="text-sm text-primary hover:underline font-medium">
-                                    → 수업 관리하러 가기
-                                </Link>
-                            </div>
-                        ) : (
-                            <span className="text-gray-500">미인증</span>
+                {/* Teacher Verification Status - Only show for teachers */}
+                {user?.userType === "teacher" && (
+                    <div className="flex items-center justify-between border-b border-gray-200 pb-8">
+                        <span className="w-32 text-sm font-bold text-gray-900">튜터 인증</span>
+                        <div className="flex-1">
+                            {user?.isTeacher ? (
+                                <div className="flex items-center gap-3">
+                                    <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                                        인증 완료
+                                    </span>
+                                    <Link href="/manage-classes" className="text-sm text-primary hover:underline font-medium">
+                                        → 수업 관리하러 가기
+                                    </Link>
+                                </div>
+                            ) : user?.verificationStatus === "pending" ? (
+                                <div className="flex items-center gap-3">
+                                    <span className="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">
+                                        검토 중
+                                    </span>
+                                    <span className="text-sm text-gray-500">관리자 승인 후 튜터 권한이 부여됩니다.</span>
+                                </div>
+                            ) : (
+                                <span className="text-gray-500">미인증</span>
+                            )}
+                        </div>
+                        {!user?.isTeacher && user?.verificationStatus !== "pending" && (
+                            <Button
+                                variant="primary"
+                                size="sm"
+                                className="w-24 rounded-full bg-[#0F766E] text-white hover:bg-[#0F766E]/90"
+                                onClick={() => setIsVerifyModalOpen(true)}
+                            >
+                                인증하기
+                            </Button>
                         )}
                     </div>
-                    {user?.userType === "student" && (
-                        <Button
-                            variant="primary"
-                            size="sm"
-                            className="w-24 rounded-full bg-[#0F766E] text-white hover:bg-[#0F766E]/90"
-                            onClick={() => setIsVerifyModalOpen(true)}
-                        >
-                            인증하기
-                        </Button>
-                    )}
-                </div>
+                )}
             </div>
 
             {/* Enrolled Classes for Students */}
@@ -164,38 +241,56 @@ export function ProfileClient({ }: ProfileClientProps) {
             >
                 <div className="space-y-6">
                     <p className="text-center text-sm text-gray-500">
-                        튜터로써 활동하기 위해선 인증이 필요해요
+                        튜터로써 활동하기 위해선 인증이 필요해요. 서류를 업로드해 승인 요청을 보내주세요.
                     </p>
 
                     <div className="space-y-4">
-                        <div
-                            onClick={() => handleFileUpload("cert")}
-                            className="flex h-32 w-full cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-200 bg-white hover:bg-gray-50 hover:border-primary transition-colors"
-                        >
-                            {uploadedFiles.find(f => f.type === "cert") ? (
-                                <span className="text-sm font-bold text-primary">
-                                    {uploadedFiles.find(f => f.type === "cert")?.name}
-                                </span>
-                            ) : (
-                                <>
-                                    <svg className="h-8 w-8 text-gray-300 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                                    </svg>
-                                    <span className="text-sm text-gray-400">강사증/공무원증 업로드</span>
-                                </>
-                            )}
+                        <div className="space-y-2">
+                            <input
+                                type="file"
+                                accept=".jpg,.jpeg,.png,.pdf"
+                                className="hidden"
+                                id="cert-upload"
+                                onChange={handleCertFileChange}
+                            />
+                            <label
+                                htmlFor="cert-upload"
+                                className="flex h-32 w-full cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-200 bg-white hover:bg-gray-50 hover:border-primary transition-colors"
+                            >
+                                {certFile ? (
+                                    <span className="text-sm font-bold text-primary">
+                                        {certFile.name}
+                                    </span>
+                                ) : (
+                                    <>
+                                        <svg className="h-8 w-8 text-gray-300 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                        </svg>
+                                        <span className="text-sm text-gray-400">강사증/공무원증 업로드</span>
+                                    </>
+                                )}
+                            </label>
                         </div>
-                        <div
-                            onClick={() => handleFileUpload("id")}
-                            className="flex h-20 w-full cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-200 bg-white hover:bg-gray-50 hover:border-primary transition-colors"
-                        >
-                            {uploadedFiles.find(f => f.type === "id") ? (
-                                <span className="text-sm font-bold text-primary">
-                                    {uploadedFiles.find(f => f.type === "id")?.name}
-                                </span>
-                            ) : (
-                                <span className="text-sm text-gray-400">신분증/여권 업로드</span>
-                            )}
+                        <div className="space-y-2">
+                            <input
+                                type="file"
+                                accept=".jpg,.jpeg,.png,.pdf"
+                                className="hidden"
+                                id="id-upload"
+                                onChange={handleIdFileChange}
+                            />
+                            <label
+                                htmlFor="id-upload"
+                                className="flex h-20 w-full cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-200 bg-white hover:bg-gray-50 hover:border-primary transition-colors"
+                            >
+                                {idFile ? (
+                                    <span className="text-sm font-bold text-primary">
+                                        {idFile.name}
+                                    </span>
+                                ) : (
+                                    <span className="text-sm text-gray-400">신분증/여권 업로드</span>
+                                )}
+                            </label>
                         </div>
                     </div>
 
@@ -210,9 +305,9 @@ export function ProfileClient({ }: ProfileClientProps) {
                         <Button
                             className="flex-1 bg-primary text-white hover:bg-primary/90"
                             onClick={handleVerificationSubmit}
-                            disabled={uploadedFiles.length === 0}
+                            disabled={!certFile || !idFile || isUploading}
                         >
-                            확인
+                            {isUploading ? "업로드 중..." : "확인"}
                         </Button>
                     </div>
                 </div>

@@ -1,18 +1,26 @@
 import { Navbar } from "@/components/layout/Navbar";
-import { db } from "@/lib/db";
 import { ClassListClient } from "./client";
+import { getBaseUrl } from "@/lib/getBaseUrl";
 
 export default async function ClassListPage() {
-  const classes = await db.class.getAll();
+  const baseUrl = getBaseUrl();
+  const response = await fetch(`${baseUrl}/api/classes`, {
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    console.error("Failed to fetch classes", await response.text());
+  }
+
+  const classes = response.ok ? await response.json() : [];
 
   return (
     <div className="min-h-screen bg-white pb-20">
       <Navbar />
 
-      <main className="mx-auto max-w-7xl px-8 py-12">
+      <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
         <ClassListClient classes={classes} />
       </main>
     </div>
   );
 }
-
