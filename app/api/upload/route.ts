@@ -1,18 +1,33 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+// const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+// const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 // 서비스 역할 키를 사용하여 RLS 우회
-const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-    auth: {
-        autoRefreshToken: false,
-        persistSession: false
-    }
-});
+// const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+//     auth: {
+//         autoRefreshToken: false,
+//         persistSession: false
+//     }
+// });
 
 export async function POST(request: NextRequest) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+        console.error("Missing Supabase configuration");
+        return NextResponse.json({ error: "Server configuration error" }, { status: 500 });
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+        auth: {
+            autoRefreshToken: false,
+            persistSession: false
+        }
+    });
+
     try {
         const formData = await request.formData();
         const file = formData.get("file") as File;
@@ -28,7 +43,7 @@ export async function POST(request: NextRequest) {
 
         // 파일 확장자 추출
         const fileExt = file.name.split('.').pop() || '';
-        
+
         // 안전한 파일명 생성 (타임스탬프 + 랜덤 문자열 + 확장자)
         const timestamp = Date.now();
         const randomStr = Math.random().toString(36).substring(2, 8);
