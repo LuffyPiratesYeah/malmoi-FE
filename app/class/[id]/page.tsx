@@ -2,10 +2,12 @@
 
 import { Navbar } from "@/components/layout/Navbar";
 import { ClassDetailClient } from "./client";
+import { getBaseUrl } from "@/lib/getBaseUrl";
 
 export default async function ClassDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
-    const response = await fetch(`/api/classes/${id}`, {
+    const baseUrl = getBaseUrl();
+    const response = await fetch(`${baseUrl}/api/classes/${id}`, {
         cache: "no-store",
     });
 
