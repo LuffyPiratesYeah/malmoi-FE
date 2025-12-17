@@ -1,10 +1,8 @@
 import { Navbar } from "@/components/layout/Navbar";
 import { ClassListClient } from "./client";
-import { getBaseUrl } from "@/lib/getBaseUrl";
 
 export default async function ClassListPage() {
-  const baseUrl = getBaseUrl();
-  const response = await fetch(`${baseUrl}/api/classes`, {
+  const response = await fetch(`/api/classes`, {
     cache: "no-store",
   });
 
