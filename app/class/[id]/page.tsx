@@ -1,4 +1,4 @@
-export const runtime = "edge";
+// export const runtime = "edge";
 
 import { Navbar } from "@/components/layout/Navbar";
 import { ClassDetailClient } from "./client";
