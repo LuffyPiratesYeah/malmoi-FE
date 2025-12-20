@@ -4,6 +4,7 @@ import { getBaseUrl } from "@/lib/getBaseUrl";
 
 export default async function ClassListPage() {
   const baseUrl = getBaseUrl();
+  console.log("Base URL:", baseUrl);
   const response = await fetch(`${baseUrl}/api/classes`, {
     cache: "no-store",
   });
@@ -13,7 +14,7 @@ export default async function ClassListPage() {
   }
 
   const classes = response.ok ? await response.json() : [];
-
+  console.log("Fetched classes:", classes);
   return (
     <div className="min-h-screen bg-white pb-20">
       <Navbar />
