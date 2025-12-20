@@ -24,7 +24,8 @@
   },
   "vars": {
     "NEXT_PUBLIC_SUPABASE_URL" : "https://zjppcxgcejhrcfuxmfbb.supabase.co",
-    "NEXT_PUBLIC_SUPABASE_ANON_KEY" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpqcHBjeGdjZWpocmNmdXhtZmJiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ4ODk2MTYsImV4cCI6MjA4MDQ2NTYxNn0.pygn93KIZB0ULKWpXzdRUnIa8h_Bsi9dD7pb7UoquV8"
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpqcHBjeGdjZWpocmNmdXhtZmJiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ4ODk2MTYsImV4cCI6MjA4MDQ2NTYxNn0.pygn93KIZB0ULKWpXzdRUnIa8h_Bsi9dD7pb7UoquV8",
+    "NEXT_PUBLIC_SITE_URL": "https://malmoi.ndie.or.kr/"
   },
   "secrets_store_secrets": [
     {
