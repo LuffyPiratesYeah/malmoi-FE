@@ -36,6 +36,15 @@ async function createSupabaseAdmin() {
     auth: {
       autoRefreshToken: false,
       persistSession: false
+    },
+    global: {
+      fetch: (url, options = {}) => {
+        return fetch(url, {
+          ...options,
+          // Set a reasonable timeout (30 seconds)
+          signal: AbortSignal.timeout(30000)
+        });
+      }
     }
   });
 }

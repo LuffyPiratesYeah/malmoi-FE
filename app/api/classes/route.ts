@@ -3,16 +3,23 @@ import { getSupabaseAdmin } from '@/lib/supabase/server';
 
 export async function GET() {
   try {
+    const startTime = Date.now();
+    console.log('Starting classes fetch...');
+    
     const supabaseAdmin = await getSupabaseAdmin();
+    console.log(`Supabase client ready in ${Date.now() - startTime}ms`);
+    
     const { data: classes, error } = await supabaseAdmin
       .from('classes')
       .select('*')
       .order('created_at', { ascending: false });
 
+    console.log(`Query completed in ${Date.now() - startTime}ms`);
+
     if (error) {
       console.error('Error fetching classes:', error);
       return NextResponse.json(
-        { error: 'Failed to fetch classes' },
+        { error: 'Failed to fetch classes', code: error.code, message: error.message },
         { status: 500 }
       );
     }
