@@ -2,20 +2,15 @@
 
 import { Navbar } from "@/components/layout/Navbar";
 import { ClassDetailClient } from "./client";
-import { getBaseUrl } from "@/lib/getBaseUrl";
+import { getClassById } from "@/app/service/classService";
 
 export default async function ClassDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
-    const baseUrl = getBaseUrl();
-    const response = await fetch(`${baseUrl}/api/classes/${id}`, {
-        cache: "no-store",
-    });
+    const classData = await getClassById(id);
 
-    if (!response.ok) {
+    if (!classData) {
         return <div className="p-8">Class not found</div>;
     }
-
-    const classData = await response.json();
 
     return (
         <div className="min-h-screen bg-white pb-20">

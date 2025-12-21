@@ -41,3 +41,39 @@ export async function getClasses(): Promise<ClassItem[]> {
     return [];
   }
 }
+
+export async function getClassById(id: string): Promise<ClassItem | null> {
+  try {
+    const supabaseAdmin = await getSupabaseAdmin();
+
+    const { data: classItem, error } = await supabaseAdmin
+      .from('classes')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error || !classItem) {
+      console.error('Error fetching class:', error);
+      return null;
+    }
+
+    // Transform to camelCase
+    const transformedClass: ClassItem = {
+      id: classItem.id,
+      title: classItem.title,
+      description: classItem.description,
+      level: classItem.level,
+      type: classItem.type,
+      category: classItem.category,
+      image: classItem.image,
+      tutorId: classItem.tutor_id,
+      tutorName: classItem.tutor_name,
+      details: classItem.details ? (Array.isArray(classItem.details) ? classItem.details : [classItem.details]) : undefined,
+    };
+
+    return transformedClass;
+  } catch (error) {
+    console.error('Service Error:', error);
+    return null;
+  }
+}
