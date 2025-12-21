@@ -1,20 +1,11 @@
 import { Navbar } from "@/components/layout/Navbar";
 import { ClassListClient } from "./client";
-import { getBaseUrl } from "@/lib/getBaseUrl";
+import { getClasses } from "@/app/service/classService";
 
 export default async function ClassListPage() {
-  const baseUrl = getBaseUrl();
-  console.log("Base URL:", baseUrl);
-  const response = await fetch(`${baseUrl}/api/classes`, {
-    cache: "no-store",
-  });
-
-  if (!response.ok) {
-    console.error("Failed to fetch classes", await response.text());
-  }
-
-  const classes = response.ok ? await response.json() : [];
+  const classes = await getClasses();
   console.log("Fetched classes:", classes);
+  
   return (
     <div className="min-h-screen bg-white pb-20">
       <Navbar />
