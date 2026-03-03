@@ -10,6 +10,10 @@ interface SecretsStoreSecret {
 interface CloudflareEnv {
   // wrangler.toml의 secrets_store_secrets에 정의된 바인딩 이름과 일치해야 합니다.
   SUPABASE_SERVICE_ROLE_KEY: SecretsStoreSecret;
+  RESEND_API_KEY?: SecretsStoreSecret;
+  EMAIL_USER?: SecretsStoreSecret;
+  EMAIL_PASS?: SecretsStoreSecret;
+  EMAIL_FROM?: SecretsStoreSecret;
 
   // 필요한 다른 Secret 변수들을 여기에 추가합니다.
   // 예: DB: D1Database;
@@ -23,6 +27,12 @@ declare namespace NodeJS {
     NEXT_PUBLIC_SUPABASE_URL: string;
     // EMAIL_PORT는 반드시 string 타입으로만 정의해야 의미 없는 비교 에러를 방지합니다.
     NEXT_PUBLIC_SUPABASE_ANON_KEY: string;
+    NEXT_PUBLIC_SITE_URL?: string;
+    SUPABASE_SERVICE_ROLE_KEY?: string;
+    RESEND_API_KEY?: string;
+    EMAIL_USER?: string;
+    EMAIL_PASS?: string;
+    EMAIL_FROM?: string;
     // 필요한 다른 vars 변수들을 여기에 추가합니다.
   }
 }
