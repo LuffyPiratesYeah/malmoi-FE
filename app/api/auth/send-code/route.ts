@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
+import { getBaseUrl } from "@/lib/getBaseUrl";
+import { sendTransactionalEmail } from "@/lib/server/mail";
 import bcrypt from "bcryptjs";
-import nodemailer from "nodemailer";
 
 const CODE_EXPIRY_MINUTES = 10;
 const RESEND_COOLDOWN_SECONDS = 60;
@@ -91,20 +92,9 @@ export async function POST(request: Request) {
       );
     }
 
-    // Send email using Nodemailer
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
+    const baseUrl = getBaseUrl().replace(/\/$/, "");
 
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: normalizedEmail,
-      subject: "[말모이] 이메일 인증코드",
-      html: `
+    const html = `
         <!DOCTYPE html>
         <html lang="ko">
         <head>
@@ -118,7 +108,7 @@ export async function POST(request: Request) {
             <!-- Header -->
             <tr>
               <td style="padding: 40px 40px 20px 40px; text-align: center; background-color: #ffffff;">
-                <img src="cid:logo" alt="Malmoi" style="width: 120px; height: auto;" />
+                <img src="${baseUrl}/logo.png" alt="Malmoi" style="width: 120px; height: auto;" />
               </td>
             </tr>
 
@@ -156,17 +146,14 @@ export async function POST(request: Request) {
           </table>
         </body>
         </html>
-      `,
-      attachments: [
-        {
-          filename: 'logo.png',
-          path: process.cwd() + '/public/logo.png',
-          cid: 'logo' // same cid value as in the html img src
-        }
-      ]
-    };
+      `;
 
-    await transporter.sendMail(mailOptions);
+    const provider = await sendTransactionalEmail({
+      to: normalizedEmail,
+      subject: "[말모이] 이메일 인증코드",
+      html,
+    });
+    console.log(`Verification code email sent via ${provider} to ${normalizedEmail}`);
 
     return NextResponse.json({
       message: "인증 코드가 발송되었습니다.",

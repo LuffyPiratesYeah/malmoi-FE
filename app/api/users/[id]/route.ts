@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/server';
+import { getBaseUrl } from '@/lib/getBaseUrl';
+import { sendTransactionalEmail } from '@/lib/server/mail';
 
 export async function GET(
   request: Request,
@@ -91,20 +93,9 @@ export async function PUT(
     // Send email notification if verification is approved
     if (body.verificationStatus === 'verified' && updatedUser.email) {
       try {
-        const nodemailer = await import("nodemailer");
-        const transporter = nodemailer.createTransport({
-          service: "gmail",
-          auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS,
-          },
-        });
+        const baseUrl = getBaseUrl().replace(/\/$/, '');
 
-        const mailOptions = {
-          from: process.env.EMAIL_USER,
-          to: updatedUser.email,
-          subject: "[말모이] 튜터 인증이 승인되었습니다! 🎉",
-          html: `
+        const html = `
             <!DOCTYPE html>
             <html lang="ko">
             <head>
@@ -118,7 +109,7 @@ export async function PUT(
                 <!-- Header -->
                 <tr>
                   <td style="padding: 40px 40px 20px 40px; text-align: center; background-color: #ffffff;">
-                    <img src="cid:logo" alt="Malmoi" style="width: 120px; height: auto;" />
+                    <img src="${baseUrl}/logo.png" alt="Malmoi" style="width: 120px; height: auto;" />
                   </td>
                 </tr>
 
@@ -141,7 +132,7 @@ export async function PUT(
 
                     <!-- Action Button -->
                     <div style="margin-bottom: 32px;">
-                      <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/manage-classes" style="display: inline-block; background-color: #00C2FF; color: white; padding: 16px 32px; border-radius: 12px; text-decoration: none; font-weight: 700; font-size: 16px;">수업 관리하러 가기</a>
+                      <a href="${baseUrl}/manage-classes" style="display: inline-block; background-color: #00C2FF; color: white; padding: 16px 32px; border-radius: 12px; text-decoration: none; font-weight: 700; font-size: 16px;">수업 관리하러 가기</a>
                     </div>
 
                     <p style="margin: 0; font-size: 14px; color: #6B7280;">
@@ -163,18 +154,14 @@ export async function PUT(
               </table>
             </body>
             </html>
-          `,
-          attachments: [
-            {
-              filename: 'logo.png',
-              path: process.cwd() + '/public/logo.png',
-              cid: 'logo'
-            }
-          ]
-        };
+          `;
 
-        await transporter.sendMail(mailOptions);
-        console.log(`Approval email sent to ${updatedUser.email}`);
+        const provider = await sendTransactionalEmail({
+          to: updatedUser.email,
+          subject: "[말모이] 튜터 인증이 승인되었습니다! 🎉",
+          html,
+        });
+        console.log(`Approval email sent via ${provider} to ${updatedUser.email}`);
       } catch (emailError) {
         console.error('Failed to send approval email:', emailError);
         // Don't fail the request if email fails, just log it

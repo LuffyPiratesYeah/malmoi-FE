@@ -32,6 +32,27 @@ INSERT INTO users (email, password_hash, name, user_type, is_teacher, verificati
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+
+# 메일 발송 (둘 중 하나 선택)
+# 1) 권장: Resend HTTP API (Cloudflare Worker 호환)
+RESEND_API_KEY=your_resend_api_key
+EMAIL_FROM=no-reply@your-domain.com
+
+# 2) 로컬 호환: Gmail SMTP
+EMAIL_USER=your_gmail_address
+EMAIL_PASS=your_gmail_app_password
+```
+
+Cloudflare Worker 배포 시에는 `.env`가 자동 반영되지 않으므로 시크릿을 별도로 등록해야 합니다:
+
+```bash
+# 권장 (Resend)
+npx wrangler secret put RESEND_API_KEY
+npx wrangler secret put EMAIL_FROM
+
+# 또는 SMTP
+npx wrangler secret put EMAIL_USER
+npx wrangler secret put EMAIL_PASS
 ```
 
 ## 3. 애플리케이션 실행
