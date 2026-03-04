@@ -2,6 +2,8 @@ import { Navbar } from "@/components/layout/Navbar";
 import { ClassListClient } from "./client";
 import { getClasses } from "@/app/service/classService";
 
+export const dynamic = "force-dynamic";
+
 export default async function ClassListPage() {
   const classes = await getClasses();
   console.log("Fetched classes:", classes);
