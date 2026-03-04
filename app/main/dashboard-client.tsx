@@ -63,16 +63,22 @@ export function DashboardClient({ schedules, isLoading }: DashboardClientProps) 
     // State for Quick Reserve
     const { quickTimes, activeQuickTimeId, setActiveQuickTime, addQuickTime, removeQuickTime } = useBookingStore();
     const [isQuickTimeModalOpen, setIsQuickTimeModalOpen] = useState(false);
-    const [quickTimeForm, setQuickTimeForm] = useState({ label: "", time: "" });
+    const [quickTimeForm, setQuickTimeForm] = useState({ label: "", date: today, time: "" });
     const router = useRouter();
 
     const handleAddQuickTime = () => {
-        if (!quickTimeForm.label || !quickTimeForm.time) {
+        if (!quickTimeForm.label || !quickTimeForm.date || !quickTimeForm.time) {
             toast.error("모든 필드를 입력해주세요");
             return;
         }
+
+        if (new Date(`${quickTimeForm.date}T00:00:00`) < new Date(`${today}T00:00:00`)) {
+            toast.error("과거 날짜는 선택할 수 없습니다");
+            return;
+        }
+
         addQuickTime(quickTimeForm);
-        setQuickTimeForm({ label: "", time: "" });
+        setQuickTimeForm({ label: "", date: today, time: "" });
         setIsQuickTimeModalOpen(false);
         toast.success("빠른 예약 시간이 추가되었습니다");
     };
@@ -82,6 +88,18 @@ export function DashboardClient({ schedules, isLoading }: DashboardClientProps) 
             toast.error("시간을 선택해주세요");
             return;
         }
+
+        const activeQuickTime = quickTimes.find((qt) => qt.id === activeQuickTimeId);
+        if (!activeQuickTime?.date || !activeQuickTime.time) {
+            toast.error("선택한 빠른 예약의 날짜와 시간을 확인해주세요");
+            return;
+        }
+
+        if (new Date(`${activeQuickTime.date}T${activeQuickTime.time}:00`) < new Date()) {
+            toast.error("과거 시점으로는 예약할 수 없습니다");
+            return;
+        }
+
         router.push("/class?quick=true");
     };
 
@@ -354,7 +372,7 @@ export function DashboardClient({ schedules, isLoading }: DashboardClientProps) 
                                     >
                                         <div className="flex flex-col items-start">
                                             <span>{qt.label}</span>
-                                            <span className="text-xs font-normal opacity-80">{qt.time}</span>
+                                            <span className="text-xs font-normal opacity-80">{qt.date ? `${qt.date} · ${qt.time}` : qt.time}</span>
                                         </div>
                                         <div className="flex items-center gap-2">
                                             {activeQuickTimeId === qt.id && (
@@ -376,6 +394,7 @@ export function DashboardClient({ schedules, isLoading }: DashboardClientProps) 
                                 ))
                             )}
                         </div>
+
 
                         <Button
                             className="mt-6 w-full bg-primary text-white hover:bg-primary/90"
@@ -402,6 +421,16 @@ export function DashboardClient({ schedules, isLoading }: DashboardClientProps) 
                             placeholder="알기 쉬운 이름을 입력하세요"
                             value={quickTimeForm.label}
                             onChange={(e) => setQuickTimeForm({ ...quickTimeForm, label: e.target.value })}
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700">날짜</label>
+                        <input
+                            type="date"
+                            className="w-full rounded-md border border-gray-300 p-2 focus:border-primary focus:outline-none"
+                            value={quickTimeForm.date}
+                            min={today}
+                            onChange={(e) => setQuickTimeForm({ ...quickTimeForm, date: e.target.value })}
                         />
                     </div>
                     <div className="space-y-2">

@@ -4,6 +4,7 @@ import { persist } from 'zustand/middleware';
 export interface QuickTime {
     id: string;
     label: string;
+    date?: string;
     time: string;
 }
 
