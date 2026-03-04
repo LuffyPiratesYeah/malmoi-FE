@@ -63,7 +63,7 @@ export function ClassListClient({ classes }: ClassListClientProps) {
         }
         setSelectedClass(cls);
         if (activeQuickTime && isQuickBooking) {
-            setBookingDate(quickBookingDate); // Date from quick booking page
+            setBookingDate(activeQuickTime.date || quickBookingDate); // Date from quick booking or fallback
             setBookingTime(activeQuickTime.time);
         } else {
             setBookingDate("");
@@ -482,7 +482,7 @@ export function ClassListClient({ classes }: ClassListClientProps) {
                             {activeQuickTime && isQuickBooking && (
                                 <div className="bg-blue-50 p-3 rounded-lg border border-blue-100 flex items-center gap-2 text-sm text-blue-800">
                                     <span>
-                                        <span className="font-bold">{activeQuickTime.label}</span> ({activeQuickTime.time})으로 예약합니다.
+                                        <span className="font-bold">{activeQuickTime.label}</span> ({activeQuickTime.date ? `${activeQuickTime.date} ` : ""}{activeQuickTime.time})으로 예약합니다.
                                     </span>
                                 </div>
                             )}
@@ -495,6 +495,7 @@ export function ClassListClient({ classes }: ClassListClientProps) {
                                     value={bookingDate}
                                     onChange={(e) => setBookingDate(e.target.value)}
                                     min={new Date().toISOString().split('T')[0]}
+                                    disabled={!!(activeQuickTime && isQuickBooking)}
                                 />
                             </div>
                             <div className="space-y-2">

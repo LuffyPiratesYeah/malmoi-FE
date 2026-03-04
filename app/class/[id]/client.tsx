@@ -51,7 +51,7 @@ export function ClassDetailClient({ classData }: ClassDetailClientProps) {
         if (activeQuickTime && isQuickBooking) {
             setBookingForm(prev => ({
                 ...prev,
-                date: quickBookingDate,
+                date: activeQuickTime.date || quickBookingDate,
                 time: activeQuickTime.time
             }));
         } else {
@@ -362,7 +362,7 @@ export function ClassDetailClient({ classData }: ClassDetailClientProps) {
                         <div className="bg-blue-50 p-3 rounded-lg border border-blue-100 flex items-center gap-2 text-sm text-blue-800">
                             <p>시계</p>
                             <span>
-                                <span className="font-bold">{activeQuickTime.label}</span> ({activeQuickTime.time})으로 예약합니다. 날짜를 선택해주세요.
+                                <span className="font-bold">{activeQuickTime.label}</span> ({activeQuickTime.date ? `${activeQuickTime.date} ` : ""}{activeQuickTime.time})으로 예약합니다.
                             </span>
                         </div>
                     )}
@@ -373,6 +373,7 @@ export function ClassDetailClient({ classData }: ClassDetailClientProps) {
                         value={bookingForm.date}
                         onChange={(e) => setBookingForm({ ...bookingForm, date: e.target.value })}
                         required
+                        disabled={!!(activeQuickTime && isQuickBooking)}
                     />
 
                     <Input
@@ -381,6 +382,7 @@ export function ClassDetailClient({ classData }: ClassDetailClientProps) {
                         value={bookingForm.time}
                         onChange={(e) => setBookingForm({ ...bookingForm, time: e.target.value })}
                         required
+                        disabled={!!(activeQuickTime && isQuickBooking)}
                     />
 
                     <Input
