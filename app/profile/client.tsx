@@ -19,6 +19,8 @@ export function ProfileClient({ }: ProfileClientProps) {
     const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
     const [certFile, setCertFile] = useState<File | null>(null);
     const [idFile, setIdFile] = useState<File | null>(null);
+    const [certPreviewUrl, setCertPreviewUrl] = useState<string>("");
+    const [idPreviewUrl, setIdPreviewUrl] = useState<string>("");
     const [isUploading, setIsUploading] = useState(false);
     const [enrolledClasses, setEnrolledClasses] = useState<ClassItem[]>([]);
 
@@ -51,6 +53,34 @@ export function ProfileClient({ }: ProfileClientProps) {
         }
     }, [loadEnrolledClasses, user?.userType]);
 
+    useEffect(() => {
+        if (!certFile || !certFile.type.startsWith("image/")) {
+            setCertPreviewUrl("");
+            return;
+        }
+
+        const objectUrl = URL.createObjectURL(certFile);
+        setCertPreviewUrl(objectUrl);
+
+        return () => {
+            URL.revokeObjectURL(objectUrl);
+        };
+    }, [certFile]);
+
+    useEffect(() => {
+        if (!idFile || !idFile.type.startsWith("image/")) {
+            setIdPreviewUrl("");
+            return;
+        }
+
+        const objectUrl = URL.createObjectURL(idFile);
+        setIdPreviewUrl(objectUrl);
+
+        return () => {
+            URL.revokeObjectURL(objectUrl);
+        };
+    }, [idFile]);
+
     const handleCertFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
@@ -69,6 +99,7 @@ export function ProfileClient({ }: ProfileClientProps) {
         const formData = new FormData();
         formData.append("file", file);
         formData.append("bucket", bucket);
+        formData.append("userId", user?.id || "anonymous");
 
         const response = await fetch("/api/upload", {
             method: "POST",
@@ -132,6 +163,34 @@ export function ProfileClient({ }: ProfileClientProps) {
 
     const handleSuccessConfirm = () => {
         setIsSuccessModalOpen(false);
+    };
+
+    const renderFilePreview = (file: File | null, previewUrl: string, placeholder: string) => {
+        if (!file) {
+            return <span className="text-sm text-gray-400">{placeholder}</span>;
+        }
+
+        return (
+            <div className="flex w-full items-center gap-3 rounded-lg border border-gray-100 bg-white/70 p-3">
+                {previewUrl ? (
+                    <img
+                        src={previewUrl}
+                        alt={`${file.name} preview`}
+                        className="h-14 w-14 rounded-md object-cover"
+                    />
+                ) : (
+                    <div className="flex h-14 w-14 items-center justify-center rounded-md bg-red-50 text-xs font-bold text-red-500">
+                        PDF
+                    </div>
+                )}
+                <div className="min-w-0 text-left">
+                    <div className="truncate text-sm font-bold text-primary">{file.name}</div>
+                    <div className="text-xs text-gray-500">
+                        {(file.size / 1024 / 1024).toFixed(2)} MB · {file.type || "알 수 없는 형식"}
+                    </div>
+                </div>
+            </div>
+        );
     };
 
     return (
@@ -255,15 +314,11 @@ export function ProfileClient({ }: ProfileClientProps) {
                             />
                             <label
                                 htmlFor="cert-upload"
-                                className="flex h-32 w-full cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-200 bg-white hover:bg-gray-50 hover:border-primary transition-colors"
+                                className="flex min-h-32 w-full cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-200 bg-white p-3 hover:border-primary hover:bg-gray-50 transition-colors"
                             >
-                                {certFile ? (
-                                    <span className="text-sm font-bold text-primary">
-                                        {certFile.name}
-                                    </span>
-                                ) : (
+                                {certFile ? renderFilePreview(certFile, certPreviewUrl, "강사증/공무원증 업로드") : (
                                     <>
-                                        <svg className="h-8 w-8 text-gray-300 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <svg className="mb-2 h-8 w-8 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                                         </svg>
                                         <span className="text-sm text-gray-400">강사증/공무원증 업로드</span>
@@ -281,13 +336,9 @@ export function ProfileClient({ }: ProfileClientProps) {
                             />
                             <label
                                 htmlFor="id-upload"
-                                className="flex h-20 w-full cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-200 bg-white hover:bg-gray-50 hover:border-primary transition-colors"
+                                className="flex min-h-24 w-full cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-200 bg-white p-3 hover:border-primary hover:bg-gray-50 transition-colors"
                             >
-                                {idFile ? (
-                                    <span className="text-sm font-bold text-primary">
-                                        {idFile.name}
-                                    </span>
-                                ) : (
+                                {idFile ? renderFilePreview(idFile, idPreviewUrl, "신분증/여권 업로드") : (
                                     <span className="text-sm text-gray-400">신분증/여권 업로드</span>
                                 )}
                             </label>
