@@ -24,7 +24,6 @@ export function ClassListClient({ classes }: ClassListClientProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
     const isQuickBooking = searchParams.get("quick") === "true";
-    const quickBookingDate = searchParams.get("date") || "";
     const [isBooking, setIsBooking] = useState(false);
     const [bookingDate, setBookingDate] = useState("");
     const [bookingTime, setBookingTime] = useState("");
@@ -35,8 +34,6 @@ export function ClassListClient({ classes }: ClassListClientProps) {
     const [selectedFormats, setSelectedFormats] = useState<string[]>([]);
     const [selectedDuration, setSelectedDuration] = useState<string>("all");
     const [selectedCategory, setSelectedCategory] = useState<string>("전체");
-    const [sortOption, setSortOption] = useState<"recommended" | "latest" | "popular">("recommended");
-    const [videoOnly, setVideoOnly] = useState(false);
 
     // Search & Top Filter States
     const [searchQuery, setSearchQuery] = useState("");
@@ -63,7 +60,7 @@ export function ClassListClient({ classes }: ClassListClientProps) {
         }
         setSelectedClass(cls);
         if (activeQuickTime && isQuickBooking) {
-            setBookingDate(quickBookingDate); // Date from quick booking page
+            setBookingDate(""); // User must select date
             setBookingTime(activeQuickTime.time);
         } else {
             setBookingDate("");
@@ -155,8 +152,6 @@ export function ClassListClient({ classes }: ClassListClientProps) {
         setSearchQuery("");
         setShowLikedOnly(false);
         setShowRecentOnly(false);
-        setSortOption("recommended");
-        setVideoOnly(false);
     };
 
     const filteredClasses = classes.filter(cls => {
@@ -164,7 +159,6 @@ export function ClassListClient({ classes }: ClassListClientProps) {
         if (selectedLevels.length > 0 && !selectedLevels.includes(cls.level)) return false;
         if (selectedGoals.length > 0 && !selectedGoals.includes(cls.category)) return false;
         if (selectedFormats.length > 0 && !selectedFormats.includes(cls.type)) return false;
-        if (videoOnly && cls.type !== "영상 강의") return false;
 
         // Search Filter
         if (searchQuery) {
@@ -180,20 +174,6 @@ export function ClassListClient({ classes }: ClassListClientProps) {
         if (showRecentOnly && !recentClassIds.has(cls.id)) return false;
 
         return true;
-    });
-
-    const sortedClasses = [...filteredClasses].sort((a, b) => {
-        if (sortOption === "latest") {
-            return b.id.localeCompare(a.id);
-        }
-
-        if (sortOption === "popular") {
-            const scoreA = Number(likedClassIds.has(a.id)) + Number(recentClassIds.has(a.id));
-            const scoreB = Number(likedClassIds.has(b.id)) + Number(recentClassIds.has(b.id));
-            return scoreB - scoreA;
-        }
-
-        return 0;
     });
 
     return (
@@ -374,34 +354,25 @@ export function ClassListClient({ classes }: ClassListClientProps) {
                         <span className="text-sm text-gray-500">총 <span className="font-bold text-primary">{filteredClasses.length}개</span> 강의</span>
                         <div className="flex flex-wrap items-center gap-3 md:gap-4">
                             <span className="text-sm text-gray-500">정렬:</span>
-                            <select
-                                className="rounded-md border border-gray-200 py-1 pl-2 pr-8 text-sm focus:border-primary focus:outline-none"
-                                value={sortOption}
-                                onChange={(e) => setSortOption(e.target.value as "recommended" | "latest" | "popular")}
-                            >
-                                <option value="recommended">추천순</option>
-                                <option value="latest">최신순</option>
-                                <option value="popular">인기순</option>
+                            <select className="rounded-md border border-gray-200 py-1 pl-2 pr-8 text-sm focus:border-primary focus:outline-none">
+                                <option>추천순</option>
+                                <option>최신순</option>
+                                <option>인기순</option>
                             </select>
                             <label className="flex items-center gap-2 cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    className="rounded border-gray-300 text-primary focus:ring-primary"
-                                    checked={videoOnly}
-                                    onChange={(e) => setVideoOnly(e.target.checked)}
-                                />
+                                <input type="checkbox" className="rounded border-gray-300 text-primary focus:ring-primary" />
                                 <span className="text-sm text-gray-600">영상 강의만</span>
                             </label>
                         </div>
                     </div>
 
-                    {sortedClasses.length > 0 ? (
+                    {filteredClasses.length > 0 ? (
                         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                            {sortedClasses.map((cls) => (
+                            {filteredClasses.map((cls) => (
                                 <div key={cls.id} className="group overflow-hidden rounded-2xl border border-gray-200 bg-white transition-shadow hover:shadow-lg">
                                     <div
                                         className="aspect-video w-full bg-gray-200 relative cursor-pointer"
-                                        onClick={() => router.push(`/class/${cls.id}${isQuickBooking ? `?quick=true${quickBookingDate ? `&date=${quickBookingDate}` : ''}` : ''}`)}
+                                        onClick={() => router.push(`/class/${cls.id}${isQuickBooking ? '?quick=true' : ''}`)}
                                     >
                                         <img src={cls.image} alt={cls.title} className="h-full w-full object-cover" />
                                         <div className="absolute right-3 top-3 flex gap-2">
@@ -431,7 +402,7 @@ export function ClassListClient({ classes }: ClassListClientProps) {
                                             {cls.description}
                                         </p>
                                         <div className="flex gap-2">
-                                            <Link href={`/class/${cls.id}${isQuickBooking ? `?quick=true${quickBookingDate ? `&date=${quickBookingDate}` : ''}` : ''}`} className="flex-1">
+                                            <Link href={`/class/${cls.id}`} className="flex-1">
                                                 <Button variant="outline" className="w-full rounded-lg text-sm" size="sm">자세히 보기</Button>
                                             </Link>
                                             <Button
@@ -482,7 +453,7 @@ export function ClassListClient({ classes }: ClassListClientProps) {
                             {activeQuickTime && isQuickBooking && (
                                 <div className="bg-blue-50 p-3 rounded-lg border border-blue-100 flex items-center gap-2 text-sm text-blue-800">
                                     <span>
-                                        <span className="font-bold">{activeQuickTime.label}</span> ({activeQuickTime.time})으로 예약합니다.
+                                        <span className="font-bold">{activeQuickTime.label}</span> ({activeQuickTime.time})으로 예약합니다. 날짜를 선택해주세요.
                                     </span>
                                 </div>
                             )}
@@ -504,7 +475,6 @@ export function ClassListClient({ classes }: ClassListClientProps) {
                                     className="w-full rounded-md border border-gray-300 p-2 focus:border-primary focus:outline-none"
                                     value={bookingTime}
                                     onChange={(e) => setBookingTime(e.target.value)}
-                                    disabled={!!(activeQuickTime && isQuickBooking)}
                                 />
                             </div>
                         </div>

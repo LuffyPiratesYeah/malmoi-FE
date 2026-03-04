@@ -64,7 +64,6 @@ export function DashboardClient({ schedules, isLoading }: DashboardClientProps) 
     const { quickTimes, activeQuickTimeId, setActiveQuickTime, addQuickTime, removeQuickTime } = useBookingStore();
     const [isQuickTimeModalOpen, setIsQuickTimeModalOpen] = useState(false);
     const [quickTimeForm, setQuickTimeForm] = useState({ label: "", time: "" });
-    const [quickBookingDate, setQuickBookingDate] = useState(today);
     const router = useRouter();
 
     const handleAddQuickTime = () => {
@@ -83,18 +82,7 @@ export function DashboardClient({ schedules, isLoading }: DashboardClientProps) 
             toast.error("시간을 선택해주세요");
             return;
         }
-
-        if (!quickBookingDate) {
-            toast.error("예약 날짜를 선택해주세요");
-            return;
-        }
-
-        if (new Date(`${quickBookingDate}T00:00:00`) < new Date(`${today}T00:00:00`)) {
-            toast.error("과거 날짜는 선택할 수 없습니다");
-            return;
-        }
-
-        router.push(`/class?quick=true&date=${quickBookingDate}`);
+        router.push("/class?quick=true");
     };
 
     return (
@@ -387,17 +375,6 @@ export function DashboardClient({ schedules, isLoading }: DashboardClientProps) 
                                     </div>
                                 ))
                             )}
-                        </div>
-
-                        <div className="mt-4 space-y-2">
-                            <label className="text-sm font-medium text-gray-700">예약 날짜</label>
-                            <input
-                                type="date"
-                                className="w-full rounded-md border border-gray-300 p-2 focus:border-primary focus:outline-none"
-                                value={quickBookingDate}
-                                min={today}
-                                onChange={(e) => setQuickBookingDate(e.target.value)}
-                            />
                         </div>
 
                         <Button

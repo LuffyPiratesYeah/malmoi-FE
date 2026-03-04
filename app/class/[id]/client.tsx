@@ -19,7 +19,6 @@ export function ClassDetailClient({ classData }: ClassDetailClientProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
     const isQuickBooking = searchParams.get("quick") === "true";
-    const quickBookingDate = searchParams.get("date") || "";
     const user = useAuthStore((state) => state.user);
     const isOwner = user?.isTeacher && user?.id === classData.tutorId;
     const isStudent = user && !user.isTeacher;
@@ -51,7 +50,7 @@ export function ClassDetailClient({ classData }: ClassDetailClientProps) {
         if (activeQuickTime && isQuickBooking) {
             setBookingForm(prev => ({
                 ...prev,
-                date: quickBookingDate,
+                date: "", // User must select date
                 time: activeQuickTime.time
             }));
         } else {
