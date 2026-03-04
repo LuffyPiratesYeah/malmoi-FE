@@ -12,6 +12,7 @@ import { useTodoStore } from "@/lib/useTodoStore";
 import { Modal } from "@/components/ui/Modal";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import { useAuthStore } from "@/lib/useAuthStore";
 
 interface DashboardClientProps {
     schedules: ScheduleItem[];
@@ -63,8 +64,11 @@ export function DashboardClient({ schedules, isLoading }: DashboardClientProps) 
     // State for Quick Reserve
     const { quickTimes, activeQuickTimeId, setActiveQuickTime, addQuickTime, removeQuickTime } = useBookingStore();
     const [isQuickTimeModalOpen, setIsQuickTimeModalOpen] = useState(false);
+    const [isQuickBookingCompleteModalOpen, setIsQuickBookingCompleteModalOpen] = useState(false);
+    const [isQuickBookingSubmitting, setIsQuickBookingSubmitting] = useState(false);
     const [quickTimeForm, setQuickTimeForm] = useState({ label: "", date: today, time: "" });
     const router = useRouter();
+    const user = useAuthStore((state) => state.user);
 
     const handleAddQuickTime = () => {
         if (!quickTimeForm.label || !quickTimeForm.date || !quickTimeForm.time) {
@@ -77,17 +81,24 @@ export function DashboardClient({ schedules, isLoading }: DashboardClientProps) 
         toast.success("빠른 예약 시간이 추가되었습니다");
     };
 
-    const handleBookWithQuickTime = () => {
+    const handleBookWithQuickTime = async () => {
         if (!activeQuickTimeId) {
             toast.error("시간을 선택해주세요");
             return;
         }
 
+        if (!user?.id) {
+            toast.error("로그인이 필요합니다");
+            router.push("/login");
+            return;
+        }
+
         const selectedQuickTime = quickTimes.find((qt) => qt.id === activeQuickTimeId);
         const bookingDate = selectedQuickTime?.date;
+        const bookingTime = selectedQuickTime?.time;
 
-        if (!bookingDate) {
-            toast.error("빠른 예약 날짜를 먼저 추가해주세요");
+        if (!bookingDate || !bookingTime) {
+            toast.error("빠른 예약 날짜와 시간을 먼저 추가해주세요");
             return;
         }
 
@@ -96,7 +107,48 @@ export function DashboardClient({ schedules, isLoading }: DashboardClientProps) 
             return;
         }
 
-        router.push(`/class?quick=true&date=${bookingDate}`);
+        const dateTimeStr = `${bookingDate}T${bookingTime}:00`;
+        if (new Date(dateTimeStr) < new Date()) {
+            toast.error("과거 시점으로는 예약할 수 없습니다");
+            return;
+        }
+
+        const latestClassId = sortedSchedules.find((schedule) => schedule.class?.id)?.class?.id;
+
+        if (!latestClassId) {
+            toast.error("예약할 수업이 없습니다. 먼저 수업을 선택해주세요");
+            router.push("/class");
+            return;
+        }
+
+        setIsQuickBookingSubmitting(true);
+
+        try {
+            const response = await fetch("/api/schedules", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    classId: latestClassId,
+                    date: bookingDate,
+                    time: bookingTime,
+                    studentId: user.id,
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error(await response.text());
+            }
+
+            removeQuickTime(activeQuickTimeId);
+            setIsQuickBookingCompleteModalOpen(true);
+            toast.success("예약 신청이 완료되었습니다");
+            router.refresh();
+        } catch (error) {
+            console.error("Failed to book class with quick time", error);
+            toast.error("수업 예약에 실패했습니다");
+        } finally {
+            setIsQuickBookingSubmitting(false);
+        }
     };
 
     return (
@@ -394,9 +446,9 @@ export function DashboardClient({ schedules, isLoading }: DashboardClientProps) 
                         <Button
                             className="mt-6 w-full bg-primary text-white hover:bg-primary/90"
                             onClick={handleBookWithQuickTime}
-                            disabled={!activeQuickTimeId}
+                            disabled={!activeQuickTimeId || isQuickBookingSubmitting}
                         >
-                            선택한 시간으로 예약하기
+                            {isQuickBookingSubmitting ? "예약 신청 중..." : "선택한 시간으로 예약하기"}
                         </Button>
                     </Card>
                 </div>
@@ -445,6 +497,25 @@ export function DashboardClient({ schedules, isLoading }: DashboardClientProps) 
                             추가하기
                         </Button>
                     </div>
+                </div>
+            </Modal>
+
+            <Modal
+                isOpen={isQuickBookingCompleteModalOpen}
+                onClose={() => setIsQuickBookingCompleteModalOpen(false)}
+                title="예약 완료"
+            >
+                <div className="space-y-5">
+                    <p className="text-sm text-gray-700 leading-relaxed">
+                        빠른 수업 예약 신청이 완료되었습니다.<br />
+                        선생님의 승인을 기다려주세요.
+                    </p>
+                    <Button
+                        className="w-full bg-primary text-white"
+                        onClick={() => setIsQuickBookingCompleteModalOpen(false)}
+                    >
+                        확인
+                    </Button>
                 </div>
             </Modal>
         </main>
